@@ -31,6 +31,9 @@ static const size_t max_size= 256;
 //to follow code structure just follow the numbered comments
 
 int getPort(struct sockaddr *sa);
+void *get_in_addr(struct sockaddr *sa);
+void sendMessage(int s, char* buf, unsigned int len);
+
 
 int main(int argc, char* argv[]) {
 	// 1. Binder starts and creates a pool to connect to as many servers and clients it needs to
@@ -214,3 +217,31 @@ int getPort(struct sockaddr *sa) {
 
     return (((struct sockaddr_in6*)sa)->sin6_port);   
 }
+
+// get sockaddr, IPv4 or IPv6:
+void *get_in_addr(struct sockaddr *sa)
+{
+    if (sa->sa_family == AF_INET) {
+        return &(((struct sockaddr_in*)sa)->sin_addr);
+    }
+
+    return &(((struct sockaddr_in6*)sa)->sin6_addr);
+}
+
+void sendMessage(int s, char* buf, unsigned int len) {
+    int total = 0;        // how many bytes we've sent
+    int bytesleft = len; // how many we have left to send
+    int n;
+
+    while(total < len) {
+        n = send(s, buf+total, bytesleft, 0);
+        if (n == -1) { break; }
+        total += n;
+        bytesleft -= n;
+    }
+
+    len = total; // return number actually sent here
+    if (n <0)
+        perror("send");
+}
+
