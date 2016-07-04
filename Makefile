@@ -14,8 +14,8 @@ server: rpc.cpp server_function_skels.c  server_functions.c server.c
 client: rpc.cpp client1.c
 	${CC} -o client1 rpc.cpp client1.c ${LDFLAGS}
 
-binder: rpc.cpp binder.c
-	${CC} -o binder rpc.cpp binder.c ${LDFLAGS}
+binder: rpc.cpp binder.cpp
+	${CC} -o binder rpc.cpp binder.cpp ${LDFLAGS}
 
 clean:
 	rm -f *.o ${APPS}
