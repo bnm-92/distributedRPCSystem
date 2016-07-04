@@ -6,6 +6,12 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <netdb.h>
  
 #define ARG_CHAR    1
 #define ARG_SHORT   2
@@ -35,6 +41,8 @@ extern int rpcCacheCall(char* name, int* argTypes, void** args);
 extern int rpcRegister(char* name, int* argTypes, skeleton f);
 extern int rpcExecute();
 extern int rpcTerminate();
+
+void *get_in_addr(struct sockaddr *sa);
 
 #ifdef __cplusplus
 }

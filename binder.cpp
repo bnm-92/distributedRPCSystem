@@ -13,27 +13,27 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>
+#include <vector>
 
 #define PORT "0"   // port we're listening on, to be dynamically decided
 // #define PORT "3600" // for some reason the dynamically allocated port was not accepting connections
 static const size_t max_size= 256;
 
-// struct database {
+using namespace std;
 
-// 	vector serverFunctions;
-// }
+struct serverFucntions {
+	char* name;
+	void* argTypes;
+};
 
-// struct serverFucntions {
-// 	char* name;
-// 	char* argTypes;
-// }
+struct database {
+	vector<serverFucntions> functions;
+};
 
 //to follow code structure just follow the numbered comments
 
 int getPort(struct sockaddr *sa);
-void *get_in_addr(struct sockaddr *sa);
 void sendMessage(int s, char* buf, unsigned int len);
-
 
 int main(int argc, char* argv[]) {
 	// 1. Binder starts and creates a pool to connect to as many servers and clients it needs to
@@ -50,6 +50,7 @@ int main(int argc, char* argv[]) {
 
     char* buf;
     int nbytes;
+    char remoteIP[INET6_ADDRSTRLEN];
     char hostIP[INET6_ADDRSTRLEN];
     int i, rv;
     struct addrinfo hints, *ai, *p;
@@ -99,8 +100,8 @@ int main(int argc, char* argv[]) {
     // print your server name and port here
     
     gethostname(hostIP, INET6_ADDRSTRLEN);
-    printf("SERVER_ADDRESS %s\n", hostIP);    
-    printf("SERVER_PORT %d\n", htons(port_num));
+    printf("BINDER_ADDRESS %s\n", hostIP);    
+    printf("BINDER_ADDRESS_PORT %d\n", htons(port_num));
 
     freeaddrinfo(ai); // all done with this
 
@@ -148,12 +149,12 @@ int main(int argc, char* argv[]) {
                         // 2. found a new connection, don't need to do anything here
 
 
-                        // printf("selectserver: new connection from %s on "
-                        //     "socket %d\n",
-                        //     inet_ntop(remoteaddr.ss_family,
-                        //         get_in_addr((struct sockaddr*)&remoteaddr),
-                        //         remoteIP, INET6_ADDRSTRLEN),
-                        //     newfd);
+                        printf("selectserver: new connection from %s on "
+                            "socket %d\n",
+                            inet_ntop(remoteaddr.ss_family,
+                                get_in_addr((struct sockaddr*)&remoteaddr),
+                                remoteIP, INET6_ADDRSTRLEN),
+                            newfd);
                     }
                 } else {
                 	// printf("handle data\n");
@@ -216,16 +217,6 @@ int getPort(struct sockaddr *sa) {
     }
 
     return (((struct sockaddr_in6*)sa)->sin6_port);   
-}
-
-// get sockaddr, IPv4 or IPv6:
-void *get_in_addr(struct sockaddr *sa)
-{
-    if (sa->sa_family == AF_INET) {
-        return &(((struct sockaddr_in*)sa)->sin_addr);
-    }
-
-    return &(((struct sockaddr_in6*)sa)->sin6_addr);
 }
 
 void sendMessage(int s, char* buf, unsigned int len) {

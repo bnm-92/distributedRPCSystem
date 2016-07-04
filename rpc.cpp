@@ -13,7 +13,15 @@
 #include <arpa/inet.h>
 #include <pthread.h>
 
-void *get_in_addr(struct sockaddr *sa);
+// get sockaddr, IPv4 or IPv6:
+void *get_in_addr(struct sockaddr *sa)
+{
+    if (sa->sa_family == AF_INET) {
+        return &(((struct sockaddr_in*)sa)->sin_addr);
+    }
+
+    return &(((struct sockaddr_in6*)sa)->sin6_addr);
+}
 
 int rpcInit(){
     // this will create a socket for a server with a random 
@@ -39,13 +47,13 @@ int rpcInit(){
     for(p = servinfo; p != NULL; p = p->ai_next) {
         if ((sockfd = socket(p->ai_family, p->ai_socktype,
                 p->ai_protocol)) == -1) {
-            perror("server: socket");
+            // perror("server: socket");
             continue;
         }
 
         if (connect(sockfd, p->ai_addr, p->ai_addrlen) == -1) {
             close(sockfd);
-            perror("server: connect");
+            // perror("server: connect");
             continue;
         }
 
@@ -59,7 +67,9 @@ int rpcInit(){
 
     inet_ntop(p->ai_family, get_in_addr((struct sockaddr *)p->ai_addr), s, sizeof s);
     printf("server: connecting to %s\n", s);
-
+    while(1) {
+        //do some work
+    }
     freeaddrinfo(servinfo);
     return sockfd;
 }
@@ -235,15 +245,3 @@ int rpcExecute(){
 int rpcTerminate(){
     return 0;
 }
-
-
-// get sockaddr, IPv4 or IPv6:
-void *get_in_addr(struct sockaddr *sa)
-{
-    if (sa->sa_family == AF_INET) {
-        return &(((struct sockaddr_in*)sa)->sin_addr);
-    }
-
-    return &(((struct sockaddr_in6*)sa)->sin6_addr);
-}
-
