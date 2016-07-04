@@ -151,8 +151,9 @@ int rpcCall(char* name, int* argTypes, void** args){
 
     // request_msg format: Length LOC_REQUEST name argTypes  
     int i;
-    int length = sizeof(LOC_REQUEST) + sizeof(name) + sizeof(argTypes) + 2;
-    char request_msg[length];
+    int len_msg_net;
+    int len_msg = sizeof(LOC_REQUEST) + sizeof(name) + sizeof(argTypes) + 2;
+    char request_msg[len_msg];
     char str[4];
     sprintf(str, "%d", LOC_REQUEST);
     strcpy(request_msg, str);
@@ -170,15 +171,13 @@ int rpcCall(char* name, int* argTypes, void** args){
     printf("%s", request_msg);
 
     // Write length of data first
-    char len[4];
-    len[0] = (char) (length >> 24) & 0xff;
-    len[1] = (char) (length >> 16) & 0xff;
-    len[2] = (char) (length >>  8) & 0xff;
-    len[3] = (char) length & 0xff;
-    int n = write(sockfd, request_msg, strlen(len));
+    printf("len_msg %d", len_msg);
+    len_msg_net = htonl(len_msg);
+    send(i, (char*)&len_msg_net, 4, 0);
+    //int n = write(sockfd, (char*)len_msg_net, sizeof(len_msg_net));
 
     // Then write data
-    n = write(sockfd, request_msg, strlen(request_msg));
+    int n = write(sockfd, request_msg, strlen(request_msg));
    
     char buffer[256];
     n = read(sockfd, buffer, 255);

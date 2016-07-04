@@ -160,49 +160,64 @@ int main(int argc, char* argv[]) {
                 	// printf("handle data\n");
                     // 3. reading data sent by either server or client to decide what to do
 
-                    // int len_msg;
-                    // int len_msg_net;
+                    int len_msg;
+                    int len_msg_net;
                     
-                    // if ((nbytes = recv(i, &len_msg_net, 4, 0)) == -1) {
-                    //     perror("recv");
-                    //     exit(1);
-                    // }
+                    if ((nbytes = recv(i, &len_msg_net, 4, 0)) == -1) {
+                        perror("recv");
+                        exit(1);
+                    }
 
-                    // len_msg = ntohl(len_msg_net);
+                    len_msg = ntohl(len_msg_net);
 
-                    //     // printf("%d\n", len_msg_net);
-                    //     // printf("%d\n", len_msg);
+                    printf("len msg net %d\n", len_msg_net);
+                    printf("len msg %d\n", len_msg);
 
-                    //     buf = malloc(sizeof(char)*len_msg);
+                    buf = (char*)malloc(sizeof(char)*len_msg);
 
-                    // if ((nbytes = recv(i, buf, len_msg, 0)) <= 0) {
+                    if ((nbytes = recv(i, buf, len_msg, 0)) <= 0) {
 
-                    //     // got error or connection closed by client
-                    //     if (nbytes == 0) {
-                    //         // connection closed
-                    //         // printf("selectserver: socket %d hung up\n", i);
-                    //     } else {
-                    //         perror("recv");
-                    //     }
-                    //     close(i); // bye!
-                    //     FD_CLR(i, &master); // remove from master set
-                    // } else {
-                    //     // we got some data from a client
+                        // got error or connection closed by client
+                        if (nbytes == 0) {
+                            // connection closed
+                            // printf("selectserver: socket %d hung up\n", i);
+                        } else {
+                            perror("recv");
+                        }
+                        close(i); // bye!
+                        FD_CLR(i, &master); // remove from master set
+                    } else {
+                        // we got some data from a client
                         
-                    //     printf("%s\n", buf);
-                    //     char* str2 = changeToTitle(buf); 
-                    //     // printf("to client: %s\n", str2);
+                        printf("%s\n", buf);
+
+                        printf("client string: %s\n", buf);
+                        char * pch;
+                        printf ("Splitting string \"%s\" into tokens:\n",buf);
+                        int code = atoi(strtok(buf, " "));
+                        if (code == LOC_REQUEST){
                         
-                    //     len_msg = strlen(str2) + 1;
-                    //     // printf("%d\n", len_msg);
-                    //     len_msg_net = htonl(len_msg);
-                    //     // printf("%d\n", len_msg_net);
-                    //     send(i, (char*)&len_msg_net, 4, 0);
+                            // Client/Binder Code
+                        
+                        } else if (code == REGISTER){
+
+                            // Server/Binder Code
+
+                        }
+
+                        //char* str2 = changeToTitle(buf); 
+                        // printf("to client: %s\n", str2);
+                        
+                        //len_msg = strlen(buf) + 1;
+                        // printf("%d\n", len_msg);
+                        //len_msg_net = htonl(len_msg);
+                        // printf("%d\n", len_msg_net);
+                        //send(i, (char*)&len_msg_net, 4, 0);
 			            
-                    //     sendMessage(i, str2, len_msg);
+                        //sendMessage(i, str2, len_msg);
                         
-                    //     free(buf);
-                    // }
+                        free(buf);
+                    }
                 } // END handle data from client
             } // END got new incoming connection
         } // END looping through file descriptors
