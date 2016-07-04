@@ -196,9 +196,11 @@ int main(int argc, char* argv[]) {
                         printf ("Splitting string \"%s\" into tokens:\n",buf);
                         int code = atoi(strtok(buf, " "));
                         if (code == LOC_REQUEST){
-                        
-                            // Client/Binder Code
-                        
+                            char* name = strtok(NULL, " ");
+                            char* argTypes = strtok(NULL, " ");
+                            printf("code: %d name: %s argTypes: %s\n", code, name, argTypes);
+                            printf("size of argTypes: %lu\n", sizeof(argTypes));
+                            // Find server to handle request
                         } else if (code == REGISTER){
 
                             // Server/Binder Code
