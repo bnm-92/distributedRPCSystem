@@ -139,9 +139,10 @@ int rpcCall(char* name, int* argTypes, void** args){
         return -1;
     }
 
-    // request_msg format: LOC_REQUEST name argTypes  
+    // request_msg format: Length LOC_REQUEST name argTypes  
     int i;
-    char request_msg[sizeof(LOC_REQUEST) + sizeof(name) + sizeof(argTypes) + 2];
+    int length = sizeof(LOC_REQUEST) + sizeof(name) + sizeof(argTypes) + 2;
+    char request_msg[length];
     char str[4];
     sprintf(str, "%d", LOC_REQUEST);
     strcpy(request_msg, str);
@@ -157,7 +158,17 @@ int rpcCall(char* name, int* argTypes, void** args){
         strcat(request_msg, ret);
     }
     printf("%s", request_msg);
-    int n = write(sockfd, request_msg, strlen(request_msg)); 
+
+    // Write length of data first
+    char len[4];
+    len[0] = (char) (length >> 24) & 0xff;
+    len[1] = (char) (length >> 16) & 0xff;
+    len[2] = (char) (length >>  8) & 0xff;
+    len[3] = (char) length & 0xff;
+    int n = write(sockfd, request_msg, strlen(len));
+
+    // Then write data
+    n = write(sockfd, request_msg, strlen(request_msg));
    
     char buffer[256];
     n = read(sockfd, buffer, 255);
@@ -177,7 +188,7 @@ int rpcCall(char* name, int* argTypes, void** args){
         return -1;
     }
 
-    // msg format: EXECUTE name argTypes args
+    // msg format: Length EXECUTE name argTypes args
     char response_msg[sizeof(EXECUTE) + sizeof(name) + sizeof(argTypes) + sizeof(args) + 3];
     sprintf(str, "%d", EXECUTE);
     strcpy(request_msg, str);
