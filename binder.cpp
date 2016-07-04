@@ -5,7 +5,18 @@
 
 #include "rpc.h"
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <netdb.h>
+
+#define PORT "0"   // port we're listening on, to be dynamically decided
+// #define PORT "3600" // for some reason the dynamically allocated port was not accepting connections
+static const size_t max_size= 256;
 
 // struct database {
 
@@ -18,6 +29,8 @@
 // }
 
 //to follow code structure just follow the numbered comments
+
+int getPort(struct sockaddr *sa);
 
 int main(int argc, char* argv[]) {
 	// 1. Binder starts and creates a pool to connect to as many servers and clients it needs to
@@ -142,7 +155,7 @@ int main(int argc, char* argv[]) {
                 } else {
                 	// printf("handle data\n");
                     // 3. reading data sent by either server or client to decide what to do
-                    
+
                     // int len_msg;
                     // int len_msg_net;
                     
@@ -192,4 +205,12 @@ int main(int argc, char* argv[]) {
     } // END for(;;)--and you thought it would never end!
 
 	return 0;
+}
+
+int getPort(struct sockaddr *sa) {
+    if (sa->sa_family == AF_INET) {
+        return (((struct sockaddr_in*)sa)->sin_port);
+    }
+
+    return (((struct sockaddr_in6*)sa)->sin6_port);   
 }
