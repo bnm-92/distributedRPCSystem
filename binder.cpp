@@ -24,6 +24,7 @@ using namespace std;
 struct serverFucntions {
 	char* name;
 	void* argTypes;
+	int sockfd;
 };
 
 struct database {
@@ -32,7 +33,6 @@ struct database {
 
 //to follow code structure just follow the numbered comments
 
-int getPort(struct sockaddr *sa);
 void sendMessage(int s, char* buf, unsigned int len);
 
 int main(int argc, char* argv[]) {
@@ -226,14 +226,6 @@ int main(int argc, char* argv[]) {
     } // END for(;;)--and you thought it would never end!
 
 	return 0;
-}
-
-int getPort(struct sockaddr *sa) {
-    if (sa->sa_family == AF_INET) {
-        return (((struct sockaddr_in*)sa)->sin_port);
-    }
-
-    return (((struct sockaddr_in6*)sa)->sin6_port);   
 }
 
 void sendMessage(int s, char* buf, unsigned int len) {

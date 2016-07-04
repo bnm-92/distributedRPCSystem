@@ -43,6 +43,7 @@ extern int rpcExecute();
 extern int rpcTerminate();
 
 void *get_in_addr(struct sockaddr *sa);
+int getPort(struct sockaddr *sa);
 
 #ifdef __cplusplus
 }

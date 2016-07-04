@@ -13,46 +13,157 @@
 #include <arpa/inet.h>
 #include <pthread.h>
 
-// get sockaddr, IPv4 or IPv6:
-void *get_in_addr(struct sockaddr *sa)
-{
-    if (sa->sa_family == AF_INET) {
-        return &(((struct sockaddr_in*)sa)->sin_addr);
+#define PORT 0
+
+int sockfdBinder;
+fd_set master;    // master file descriptor list
+fd_set read_fds;  // temp file descriptor list for select()
+int fdmax;        // maximum file descriptor number
+int listener;     // listening socket descriptor
+int newfd;        // newly accept()ed socket descriptor
+struct sockaddr_storage remoteaddr; // client address
+socklen_t addrlen;
+pthread_t clientThread;
+
+char* SERVER_ADDRESS;
+int PORT;
+
+void *listenForClient(void * id) {
+    int i;
+    // listen
+    if (listen(listener, 10) == -1) {
+        perror("listen");
+        exit(3);
     }
 
-    return &(((struct sockaddr_in6*)sa)->sin6_addr);
-}
+    // add the listener to the master set
+    FD_SET(listener, &master);
+
+    fdmax = listener;
+
+    // main loop
+    for(;;) {
+        read_fds = master; // copy it
+        if (select(fdmax+1, &read_fds, NULL, NULL, NULL) == -1) {
+            perror("select");
+            exit(4);
+        }
+
+        // run through the existing connections looking for data to read
+        for(i = 0; i <= fdmax; i++) {
+            if (FD_ISSET(i, &read_fds)) { // we got one!!
+                if (i == listener) {
+                    // handle new connections
+                    addrlen = sizeof remoteaddr;
+                    newfd = accept(listener,
+                        (struct sockaddr *)&remoteaddr,
+                        &addrlen);
+
+                    if (newfd == -1) {
+                        perror("accept");
+                    } else {
+                        FD_SET(newfd, &master); // add to master set
+                        if (newfd > fdmax) {    // keep track of the max
+                            fdmax = newfd;
+                        }
+                    }
+                } else {
+                    // printf("handle data\n");
+                    
+                } // END handle data from client
+            } // END got new incoming connection
+        } // END looping through file descriptors
+    } // END for(;;)--and you thought it would never end!
+} // end of function
 
 int rpcInit(){
-    // this will create a socket for a server with a random 
-    //port and connect to the binder
-    int sockfd;
-    struct addrinfo hints, *servinfo, *p;
-    int rv;
-    char s[INET6_ADDRSTRLEN];
+    // this will create a socket for the client and listen to it on a thread
+
+    char* buf;
+    int nbytes;
+    // char remoteIP[INET6_ADDRSTRLEN];
+    char hostIP[INET6_ADDRSTRLEN];
+    int i, rv;
+
+    struct addrinfo hints, *ai, *p;
+
+    FD_ZERO(&master);    // clear the master and temp sets
+    FD_ZERO(&read_fds);
+
+    // get us a socket and bind it
+    memset(&hints, 0, sizeof hints);
+    hints.ai_family = AF_UNSPEC;
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_flags = AI_PASSIVE;
+    if ((rv = getaddrinfo(NULL, PORT, &hints, &ai)) != 0) {
+        // fprintf(stderr, "selectserver: %s\n", gai_strerror(rv));
+        exit(1);
+    }
+    int port_num;
+    for(p = ai; p != NULL; p = p->ai_next) {
+        listener = socket(p->ai_family, p->ai_socktype, p->ai_protocol);
+        if (listener < 0) { 
+            continue;
+        }
+        
+        // lose the pesky "address already in use" error message
+        // setsockopt(listener, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int));
+
+            int ret = bind(listener, p->ai_addr, p->ai_addrlen);
+            getsockname(listener, (struct sockaddr *)p->ai_addr, (socklen_t *)&p->ai_addrlen);
+            port_num = getPort((struct sockaddr *)p->ai_addr);
+        if (ret < 0) {
+            close(listener);
+            continue;
+        }
+
+        break;
+    }
+
+    // if we got here, it means we didn't get bound
+    if (p == NULL) {
+        fprintf(stderr, "selectserver: failed to bind\n");
+        exit(2);
+    }
+
+    // print your server name and port here
+    gethostname(hostIP, INET6_ADDRSTRLEN);
+    
+    SERVER_ADDRESS = hostIP;
+    PORT = htons(port_num);
+
+    freeaddrinfo(ai); // all done with this
+
+    //create a thread for listening purposes
+    pthread_create(&clientThread, NULL, listenForClient, (void*)0);
+
+    // connect to the binder with a separate socket and keep it open
+    struct addrinfo hintsB, *servinfoB, *pB;
+    int rvB;
+    char sB[INET6_ADDRSTRLEN];
 
     char* hostname = getenv("BINDER_ADDRESS");
     char* port  = getenv("BINDER_PORT");
 
-    memset(&hints, 0, sizeof hints);
-    hints.ai_family = AF_UNSPEC;
-    hints.ai_socktype = SOCK_STREAM;
+    memset(&hintsB, 0, sizeof hintsB);
+    hintsB.ai_family = AF_UNSPEC;
+    hintsB.ai_socktype = SOCK_STREAM;
 
-    if ((rv = getaddrinfo(hostname, (char*)port, &hints, &servinfo)) != 0) {
+    if ((rvB = getaddrinfo(hostname, (char*)port, &hintsB, &servinfoB)) != 0) {
         fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
         return 1;
     }
 
     // loop through all the results and connect to the first we can
-    for(p = servinfo; p != NULL; p = p->ai_next) {
-        if ((sockfd = socket(p->ai_family, p->ai_socktype,
-                p->ai_protocol)) == -1) {
+    for(pB = servinfoB; pB != NULL; pB = pB->ai_next) {
+        if ((sockfdBinder = socket(pB->ai_family, pB->ai_socktype,
+                pB->ai_protocol)) == -1) {
             // perror("server: socket");
             continue;
         }
 
-        if (connect(sockfd, p->ai_addr, p->ai_addrlen) == -1) {
-            close(sockfd);
+        if (connect(sockfdBinder, pB->ai_addr, pB->ai_addrlen) == -1) {
+            close(sockfdBinder);
             // perror("server: connect");
             continue;
         }
@@ -60,18 +171,18 @@ int rpcInit(){
         break;
     }
 
-    if (p == NULL) {
+    if (pB == NULL) {
         fprintf(stderr, "server: failed to connect\n");
         return 2;
     }
 
-    inet_ntop(p->ai_family, get_in_addr((struct sockaddr *)p->ai_addr), s, sizeof s);
-    printf("server: connecting to %s\n", s);
-    while(1) {
-        //do some work
-    }
-    freeaddrinfo(servinfo);
-    return sockfd;
+    inet_ntop(pB->ai_family, get_in_addr((struct sockaddr *)pB->ai_addr), sB, sizeof sB);
+    printf("server: connecting to %s\n", sB);
+    // while(1) {
+    //     //do some work
+    // }
+    freeaddrinfo(servinfoB);
+    return 0;
 }
 
 int connectToSocket(int port, hostent* server){
@@ -243,4 +354,21 @@ int rpcExecute(){
 
 int rpcTerminate(){
     return 0;
+}
+
+void *get_in_addr(struct sockaddr *sa)
+{
+    if (sa->sa_family == AF_INET) {
+        return &(((struct sockaddr_in*)sa)->sin_addr);
+    }
+
+    return &(((struct sockaddr_in6*)sa)->sin6_addr);
+}
+
+int getPort(struct sockaddr *sa) {
+    if (sa->sa_family == AF_INET) {
+        return (((struct sockaddr_in*)sa)->sin_port);
+    }
+
+    return (((struct sockaddr_in6*)sa)->sin6_port);   
 }
