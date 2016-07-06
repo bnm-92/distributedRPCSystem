@@ -13,7 +13,7 @@
 #include <arpa/inet.h>
 #include <pthread.h>
 
-#define PORT 0
+#define PORT_ZERO 0
 
 int sockfdBinder;
 fd_set master;    // master file descriptor list
@@ -95,7 +95,7 @@ int rpcInit(){
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_flags = AI_PASSIVE;
-    if ((rv = getaddrinfo(NULL, PORT, &hints, &ai)) != 0) {
+    if ((rv = getaddrinfo(NULL, PORT_ZERO, &hints, &ai)) != 0) {
         // fprintf(stderr, "selectserver: %s\n", gai_strerror(rv));
         exit(1);
     }
