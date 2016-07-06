@@ -1,7 +1,7 @@
 .PHONY: clean
 
 CFLAGS  := -Wall -Werror -g
-CC      := gcc
+CC      := g++
 LDFLAGS := ${LDFLAGS} -lpthread
 
 APPS    := server binder client

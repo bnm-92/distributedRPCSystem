@@ -21,14 +21,14 @@ static const size_t max_size= 256;
 
 using namespace std;
 
-struct serverFucntions {
+struct serverFunction {
 	char* name;
 	void* argTypes;
 	int sockfd;
 };
 
 struct database {
-	vector<serverFucntions> functions;
+	vector<serverFunction> functions;
 };
 
 //to follow code structure just follow the numbered comments
@@ -37,6 +37,9 @@ void sendMessage(int s, char* buf, unsigned int len);
 
 int main(int argc, char* argv[]) {
 	// 1. Binder starts and creates a pool to connect to as many servers and clients it needs to
+
+    // Stores info about all of the servers
+    database db;
 
 	fd_set master;    // master file descriptor list
     fd_set read_fds;  // temp file descriptor list for select()
@@ -281,7 +284,10 @@ int main(int argc, char* argv[]) {
                             printf("argType %d\n", argTypes[i]);
                         }
 
-                        // Register server info here
+                        // Register server info to database
+                        serverFunction server_function = {name, argTypes, server_port};
+                        db.functions.push_back(server_function);
+                        printf("Added function %s at port %d to db\n", server_function.name, server_function.sockfd);
 
                         // Stub code assuming we register successfully
                         printf("register_success %d\n", REGISTER_SUCCESS);
