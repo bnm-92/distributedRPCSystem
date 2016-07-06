@@ -202,54 +202,6 @@ int connectToSocket(int port, hostent* server){
     return sockfd;
 }
 
-char* toString(void* data, int type){
-    int length_in_bytes[] = {0,1,2,4,4,8,4};
-    char t = type >> 16;
-    char* ret = (char*)malloc(sizeof(char)*length_in_bytes[t]);
-    switch(t){
-        case ARG_CHAR: {
-            char c = *(char*) data;
-            ret[0] = c;
-            return ret;
-        }
-        case ARG_SHORT: {
-            short s = *(short*) data;
-            ret[0] = (char) ((s >> 8) & 0xff);
-            ret[1] = (char) (s & 0xff);
-            return ret;
-        }
-        case ARG_INT: {
-            int i = *(int*) data;
-            printf("i %d\n", i);
-            ret[0] = (char) ((i >> 24) & 0xff);
-            ret[1] = (char) ((i >> 16) & 0xff);
-            ret[2] = (char) ((i >> 8) & 0xff);
-            ret[3] = (char) (i & 0xff);
-            return ret;
-        }
-        case ARG_LONG: {
-            long l = *(long*) data;
-            ret[0] = (char) ((l >> 24) & 0xff);
-            ret[1] = (char) ((l >> 16) & 0xff);
-            ret[2] = (char) ((l >> 8) & 0xff);
-            ret[3] = (char) (l & 0xff);
-            return ret;
-        }
-        // Need to find the best way to do this
-        // Shifting doesn't work for doubles
-        case ARG_DOUBLE: {
-            double d = *(double*) data;
-            memcpy(&ret,&d,sizeof(d));
-            return ret;
-        }
-        default: {
-            long f = *(float*) data;
-            memcpy(&ret,&f,sizeof(f));
-            return ret;
-       }
-    }
-}
-
 int rpcCall(char* name, int* argTypes, void** args){
     printf("START\n");
     // Connect to binder
