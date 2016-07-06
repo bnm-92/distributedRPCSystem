@@ -208,6 +208,7 @@ int main(int argc, char* argv[]) {
                             printf("argType %d\n", argTypes[i]);
                         }
 
+                        // Determine which server info to return here
 
                         free(name);
 
