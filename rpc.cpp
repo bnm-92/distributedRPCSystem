@@ -402,10 +402,67 @@ int rpcCacheCall(char* name, int* argTypes, void** args){
 }
 
 int rpcRegister(char* name, int* argTypes, skeleton f){
+    printf("START CONNECT TO BINDER\n");
+    // Connect to binder - do we store this globally and keep it open?
+    int binder_port = atoi(getenv("BINDER_PORT"));
+    struct hostent *binder_address = gethostbyname(getenv("BINDER_ADDRESS"));
+    int sockfd = connectToSocket(binder_port, binder_address); 
+    if (sockfd < 0){
+        return -1;
+    }
+
+    // REGISTER server_identifier_len server_identifier port len_name name len_argTypes argTypes 
+    int i;
+    char* server_identifier = "some server identifier";
+
+    printf("register %d\n", REGISTER);
+    int register_net = htonl(REGISTER);
+    send(sockfd, (char*)&register_net, 4, 0);
+
+    int len_server_identifier = strlen(server_identifier);
+    int len_server_identifier_net = htonl(len_server_identifier);
+    printf("size of server_identifier %d\n", len_server_identifier);
+    send(sockfd, (char*)&len_server_identifier_net, sizeof(len_server_identifier_net), 0);
+
+    printf("server_identifier %s\n", server_identifier);
+    send(sockfd, name, len_server_identifier, 0);
+
+    int server_port = 1234;
+    printf("server port %d\n", server_port);
+    int server_port_net = htonl(server_port);
+    send(sockfd, (char*)&server_port_net, 4, 0);
+
+    int len_name = strlen(name);
+    int len_name_net = htonl(len_name);
+    printf("size of name %d\n", len_name);
+    send(sockfd, (char*)&len_name_net, sizeof(len_name_net), 0);
+
+    printf("name %s\n", name);
+    send(sockfd, name, len_name, 0);
+
+    int len_argTypes = sizeof(argTypes);
+    int len_argTypes_net = htonl(len_argTypes);
+    printf("size of argTypes %d\n", len_argTypes);
+    send(sockfd, (char*)&len_argTypes_net, 4, 0);
+
+    for (i=0; i<len_argTypes/2; i++){
+        int argType = argTypes[i];
+        int argType_net = htonl(argType);
+        printf("argTypes %d\n", argType);
+        send(sockfd, (char*)&argType_net, 2, 0);
+    }
+
+    printf("done registering to binder\n");
+
+    // recv either REGISTER_SUCCESS or REGISTER_FAILURE
+
     return 0;
 }
 
 int rpcExecute(){
+    printf("starting to execute");
+    pthread_create(&clientThread, NULL, listenForClient, (void*)0);
+    printf("ending exexution");
     return 0;
 }
 
