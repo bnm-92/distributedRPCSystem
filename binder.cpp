@@ -210,6 +210,26 @@ int main(int argc, char* argv[]) {
 
                         // Determine which server info to return here
 
+                        // Stub code assuming we find a server
+                        printf("loc_success %d\n", LOC_SUCCESS);
+                        int loc_success_net = htonl(LOC_SUCCESS);
+                        send(i, (char*)&loc_success_net, 4, 0);
+
+                        int server_port = 1234;
+                        int server_port_net = htonl(server_port);
+                        printf("server port %d\n", server_port);
+                        send(i, (char*)&server_port_net, 4, 0);
+
+                        char* server_addr = "Some server address";
+                        
+                        int len_server_addr = strlen(server_addr);
+                        int len_server_addr_net = htonl(len_server_addr);
+                        printf("size of server_addr %d\n", len_server_addr);
+                        send(i, (char*)&len_server_addr_net, sizeof(len_server_addr_net), 0);
+
+                        send(i, server_addr, len_server_addr, 0);
+
+
                         free(name);
 
 

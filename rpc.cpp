@@ -241,19 +241,39 @@ int rpcCall(char* name, int* argTypes, void** args){
 
     printf("done\n");
 
-    //int n = write(sockfd, (char*)len_msg_net, sizeof(len_msg_net));
+    int code;
+    int code_net;
 
-    // Then write data
-    //int n = write(sockfd, request_msg, strlen(request_msg));
-    int n = 0;
-    char buffer[256];
-    // n = read(sockfd, buffer, 255);
-    // if (n < 0){
-    //     return -1;
-    // }
-    // if (buffer[0] != LOC_SUCCESS){
-    //     return -1;
-    // }
+    // Get code
+    if (recv(sockfd, &code_net, 4, 0) <= 0){
+        return -1;
+    }
+    code = ntohl(code_net);
+    printf("code %d\n", code);
+    if (code != LOC_SUCCESS){
+        return -1;
+    }
+    // Get server port
+    int server_port_net;
+    int server_port;
+    recv(sockfd, &server_port_net, 4, 0);
+    server_port = ntohl(server_port_net);
+    printf("server_port %d\n", server_port);
+
+    //Get server address length
+    int len_server_addr_net;
+    int len_server_addr;
+    recv(sockfd, &len_server_addr_net, 4, 0);
+    len_server_addr = ntohl(len_server_addr_net);
+    printf("len_server_addr %d\n", len_server_addr);
+
+    // Get server address
+    char * server_addr = (char*)malloc(sizeof(char)*len_server_addr);
+    recv(sockfd, server_addr, len_server_addr, 0);
+    printf("server_addr %s\n", server_addr);
+
+
+    
     close(sockfd);
     
     // struct hostent *server_identifier = gethostbyname(strtok(buffer, " ")); 
@@ -293,6 +313,8 @@ int rpcCall(char* name, int* argTypes, void** args){
     //     return -1;
     // }
     // close(sockfd);
+
+    free(server_addr);
     return 0;
 }
 
