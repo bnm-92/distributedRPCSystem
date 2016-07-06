@@ -455,13 +455,13 @@ int rpcRegister(char* name, int* argTypes, skeleton f){
     // recv either REGISTER_SUCCESS or REGISTER_FAILURE
     int code;
     int code_net;
-    recv(i, &code_net, 4, 0);
+    recv(sockfd, &code_net, 4, 0);
     code = ntohl(code_net);
     printf("code %d\n", code);
 
     int error;
     int error_net;
-    recv(i, &error_net, 4, 0);
+    recv(sockfd, &error_net, 4, 0);
     error = ntohl(error_net);
     printf("error %d\n", error);
 

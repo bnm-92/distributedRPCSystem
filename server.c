@@ -55,6 +55,7 @@ int main(int argc, char *argv[]) {
   /* 
    * register server functions f0~f4
    */
+  printf("registering");
   rpcRegister("f0", argTypes0, *f0_Skel);
   rpcRegister("f1", argTypes1, *f1_Skel);
   rpcRegister("f2", argTypes2, *f2_Skel);
@@ -62,6 +63,7 @@ int main(int argc, char *argv[]) {
   rpcRegister("f4", argTypes4, *f4_Skel);
 
   /* call rpcExecute */
+  printf("executing");
   rpcExecute();
 
   /* return */
