@@ -267,13 +267,25 @@ int rpcCall(char* name, int* argTypes, void** args){
     int loc_request_net = htonl(LOC_REQUEST);
     send(sockfd, (char*)&loc_request_net, 4, 0);
 
-    int len_name_net = htonl(sizeof(name)); 
-    printf("size of name %d\n", sizeof(name));
+    int len_name = strlen(name);
+    int len_name_net = htonl(len_name);
+    printf("size of name %d\n", len_name);
     send(sockfd, (char*)&len_name_net, sizeof(len_name_net), 0);
 
-    //send(sockfd, (char*)&argTypes, sizeof(argTypes), 0);
+    printf("name %s\n", name);
+    send(sockfd, name, len_name, 0);
 
+    int len_argTypes = sizeof(argTypes);
+    int len_argTypes_net = htonl(len_argTypes);
+    printf("size of argTypes %d\n", len_argTypes);
+    send(sockfd, (char*)&len_argTypes_net, 4, 0);
 
+    for (i=0; i<len_argTypes/2; i++){
+        int argType = argTypes[i];
+        int argType_net = htonl(argType);
+        printf("argTypes %d\n", argType);
+        send(sockfd, (char*)&argType_net, 2, 0);
+    }
 
     printf("done\n");
 
