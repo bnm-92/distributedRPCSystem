@@ -68,7 +68,76 @@ void *listenForClient(void * id) {
                         }
                     }
                 } else {
-                    // printf("handle data\n");
+                    int code;
+                    int code_net;
+
+                    // Get code
+                    int nbytes;
+                    if ((nbytes = recv(i, &code_net, 4, 0)) <= 0) {
+                        //got error or connection closed by client
+                        if (nbytes == 0) {
+                            //connection closed
+                            printf("selectserver: socket %d hung up\n", i);
+                        } else {
+                            perror("recv");
+                        }
+                        close(i); // bye!
+                        FD_CLR(i, &master); // remove from master set
+                        break;
+                    }
+                    code = ntohl(code_net);
+                    printf("code %d\n", code);
+
+                    if (code == EXECUTE){
+                        // length of name
+                        int len_name_net;
+                        int len_name;
+                        recv(i, &len_name_net, 4, 0);
+                        len_name = ntohl(len_name_net);
+                        printf("len_name %d\n", len_name);
+
+                        // name
+                        char * name = (char*)malloc(sizeof(char)*len_name);
+                        recv(i, name, len_name, 0);
+                        printf("name %s\n", name);
+
+                        // length of argTypes
+                        int len_argTypes_net;
+                        int len_argTypes;
+                        recv(i, &len_argTypes_net, 4, 0);
+                        len_argTypes = ntohl(len_argTypes_net);
+                        printf("len_argTypes %d\n", len_argTypes);
+
+                        int argTypes[len_argTypes/2];
+                        int j;
+                        for (j=0; j<len_argTypes/2; j++){
+                            int argType_net;
+                            recv(i, &argType_net, 2, 0);
+                            argTypes[i] = ntohl(argType_net);
+                            printf("argType %d\n", argTypes[i]);
+                        }
+
+                        // length of argTypes
+                        int len_args_net;
+                        int len_args;
+                        recv(i, &len_args_net, 4, 0);
+                        len_args = ntohl(len_args_net);
+                        printf("len_args %d\n", len_args);
+
+                        int args[len_args/4];
+                        for (j=0; j<len_args/2; j++){
+                            int arg_net;
+                            recv(i, &arg_net, 4, 0);
+                            args[i] = ntohl(arg_net);
+                            printf("arg %d\n", args[i]);
+                        }
+
+                        // Now we have all the info we need to run the function
+                        // So run it
+
+
+                        free(name);
+                    }
                     
                 } // END handle data from client
             } // END got new incoming connection
@@ -277,7 +346,7 @@ int rpcCall(char* name, int* argTypes, void** args){
 
     printf("START CONNECT TO SERVER\n");
     // Connect to server
-    int hostent *server_address = gethostbyname(server_addr);
+    struct hostent *server_address = gethostbyname(server_addr);
     sockfd = connectToSocket(server_port, server_address); 
     if (sockfd < 0){
         return -1;
@@ -311,7 +380,7 @@ int rpcCall(char* name, int* argTypes, void** args){
     send(sockfd, (char*)&len_args_net, 4, 0);
 
     for (i=0; i<len_args/4; i++){
-        int arg = args[i];
+        int arg = *((int *)args[i]);
         int arg_net = htonl(arg);
         printf("argTypes %d\n", arg);
         send(sockfd, (char*)&arg_net, 4, 0);
