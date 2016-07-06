@@ -1,9 +1,12 @@
 #include "rpc.h"
 #include "server_function_skels.h"
 
+#include <stdio.h>
+
 int main(int argc, char *argv[]) {
   
   /* create sockets and connect to the binder */
+  printf("initializing");
   int sockfdBinder = rpcInit();
 
   /* prepare server functions' signatures */

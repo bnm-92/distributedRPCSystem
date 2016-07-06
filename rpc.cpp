@@ -389,8 +389,6 @@ int rpcCall(char* name, int* argTypes, void** args){
     printf("done sending to server\n");
 
     // Receive from server
-
-    close(sockfd);
     printf("done receiving from binder");
 
     free(server_addr);
@@ -455,6 +453,21 @@ int rpcRegister(char* name, int* argTypes, skeleton f){
     printf("done registering to binder\n");
 
     // recv either REGISTER_SUCCESS or REGISTER_FAILURE
+    int code;
+    int code_net;
+    recv(i, &code_net, 4, 0);
+    code = ntohl(code_net);
+    printf("code %d\n", code);
+
+    int error;
+    int error_net;
+    recv(i, &error_net, 4, 0);
+    error = ntohl(error_net);
+    printf("error %d\n", error);
+
+    printf("done receiving from binder\n");
+
+    close(sockfd);
 
     return 0;
 }

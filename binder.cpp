@@ -249,7 +249,7 @@ int main(int argc, char* argv[]) {
                         // server port
                         int server_port_net;
                         int server_port;
-                        recv(i, &server_port_net, 4, 0));
+                        recv(i, &server_port_net, 4, 0);
                         server_port = ntohl(server_port_net);
                         printf("server_port %d", server_port);
 
