@@ -234,9 +234,68 @@ int main(int argc, char* argv[]) {
 
 
                     } else if (code == REGISTER){
+                        // length of server_identifier
+                        int len_server_identifier_net;
+                        int len_server_identifier;
+                        recv(i, &len_server_identifier_net, 4, 0);
+                        len_server_identifier = ntohl(len_server_identifier_net);
+                        printf("len_server_identifier%d\n", len_server_identifier);
 
-                        // Server/Binder Code
-                        printf("server\n");
+                        // server_identifier
+                        char * server_identifier = (char*)malloc(sizeof(char)*len_server_identifier);
+                        recv(i, server_identifier, len_server_identifier, 0);
+                        printf("server_identifier %s\n", server_identifier);
+
+                        // server port
+                        int server_port_net;
+                        int server_port;
+                        recv(i, &server_port_net, 4, 0));
+                        server_port = ntohl(server_port_net);
+                        printf("server_port %d", server_port);
+
+                        // length of name
+                        int len_name_net;
+                        int len_name;
+                        recv(i, &len_name_net, 4, 0);
+                        len_name = ntohl(len_name_net);
+                        printf("len_name %d\n", len_name);
+
+                        // name
+                        char * name = (char*)malloc(sizeof(char)*len_name);
+                        recv(i, name, len_name, 0);
+                        printf("name %s\n", name);
+
+                        // length of argTypes
+                        int len_argTypes_net;
+                        int len_argTypes;
+                        recv(i, &len_argTypes_net, 4, 0);
+                        len_argTypes = ntohl(len_argTypes_net);
+                        printf("len_argTypes %d\n", len_argTypes);
+
+                        int argTypes[len_argTypes/2];
+                        int j;
+                        for (j=0; j<len_argTypes/2; j++){
+                            int argType_net;
+                            recv(i, &argType_net, 2, 0);
+                            argTypes[i] = ntohl(argType_net);
+                            printf("argType %d\n", argTypes[i]);
+                        }
+
+                        // Register server info here
+
+                        // Stub code assuming we register successfully
+                        printf("register_success %d\n", REGISTER_SUCCESS);
+                        int register_success_net = htonl(REGISTER_SUCCESS);
+                        send(i, (char*)&register_success_net, 4, 0);
+
+                        // This integer will hold any warnings or errors
+                        int error = 0;
+                        int error_net = htonl(error);
+                        printf("error %d\n", error);
+                        send(i, (char*)&error_net, 4, 0);
+                        
+
+                        free(name);
 
                     }
 
