@@ -160,52 +160,39 @@ int main(int argc, char* argv[]) {
                 	// printf("handle data\n");
                     // 3. reading data sent by either server or client to decide what to do
 
-                    int len_msg;
-                    int len_msg_net;
+                    int code;
+                    int code_net;
                     
-                    if ((nbytes = recv(i, &len_msg_net, 4, 0)) == -1) {
-                        perror("recv");
-                        exit(1);
-                    }
-
-                    len_msg = ntohl(len_msg_net);
-
-                    printf("len msg net %d\n", len_msg_net);
-                    printf("len msg %d\n", len_msg);
-
-                    buf = (char*)malloc(sizeof(char)*len_msg);
-
-                    if ((nbytes = recv(i, buf, len_msg, 0)) <= 0) {
-
-                        // got error or connection closed by client
+                    // Get code
+                    if ((nbytes = recv(i, &code_net, 4, 0)) <= 0) {
+                        //got error or connection closed by client
                         if (nbytes == 0) {
-                            // connection closed
-                            // printf("selectserver: socket %d hung up\n", i);
+                            //connection closed
+                            printf("selectserver: socket %d hung up\n", i);
                         } else {
                             perror("recv");
                         }
                         close(i); // bye!
                         FD_CLR(i, &master); // remove from master set
-                    } else {
-                        // we got some data from a client
-                        
-                        printf("%s\n", buf);
+                        break;
+                    }
+                    code = ntohl(code_net);
+                    printf("code %d\n", code);
 
-                        printf("client string: %s\n", buf);
-                        char * pch;
-                        printf ("Splitting string \"%s\" into tokens:\n",buf);
-                        int code = atoi(strtok(buf, " "));
-                        if (code == LOC_REQUEST){
-                            char* name = strtok(NULL, " ");
-                            char* argTypes = strtok(NULL, " ");
-                            printf("code: %d name: %s argTypes: %s\n", code, name, argTypes);
-                            printf("size of argTypes: %lu\n", sizeof(argTypes));
-                            // Find server to handle request
-                        } else if (code == REGISTER){
+                    if (code == LOC_REQUEST){
+                        int len_name_net;
+                        int len_name;
+                        // length of name
+                        recv(i, &len_name_net, 4, 0);
+                        len_name = ntohl(len_name_net);
+                        printf("len_name %d\n", len_name);
 
-                            // Server/Binder Code
+                    } else if (code == REGISTER){
 
-                        }
+                        // Server/Binder Code
+                        printf("server\n");
+
+                    }
 
                         //char* str2 = changeToTitle(buf); 
                         // printf("to client: %s\n", str2);
@@ -218,8 +205,8 @@ int main(int argc, char* argv[]) {
 			            
                         //sendMessage(i, str2, len_msg);
                         
-                        free(buf);
-                    }
+                        //free(buf);
+                    //}
                 } // END handle data from client
             } // END got new incoming connection
         } // END looping through file descriptors

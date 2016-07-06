@@ -251,92 +251,84 @@ char* toString(void* data, int type){
 }
 
 int rpcCall(char* name, int* argTypes, void** args){
+    printf("START\n");
     // Connect to binder
     int binder_port = atoi(getenv("BINDER_PORT"));
     struct hostent *binder_address = gethostbyname(getenv("BINDER_ADDRESS"));
-
     int sockfd = connectToSocket(binder_port, binder_address); 
     if (sockfd < 0){
         return -1;
     }
 
-    // request_msg format: Length LOC_REQUEST name argTypes  
+    // request_msg format: LOC_REQUEST len_name name len_argTypes argTypes  
     int i;
-    int len_msg_net;
-    int len_msg = sizeof(LOC_REQUEST) + sizeof(name) + sizeof(argTypes) + 2;
-    char request_msg[len_msg];
-    char str[4];
-    sprintf(str, "%d", LOC_REQUEST);
-    strcpy(request_msg, str);
-    strcat(request_msg, " ");
-    strcat(request_msg, name);
-    strcat(request_msg, " ");
-    for (i=0; i <= sizeof(argTypes)/sizeof(argTypes[0]); i++){
-        char ret[4];
-        ret[0] = (char) (argTypes[i] >> 24) & 0xff;
-        ret[1] = (char) (argTypes[i] >> 16) & 0xff;
-        ret[2] = (char) (argTypes[i] >>  8) & 0xff;
-        ret[3] = (char) argTypes[i] & 0xff;
-        strcat(request_msg, ret);
-    }
-    printf("%s", request_msg);
 
-    // Write length of data first
-    printf("len_msg %d", len_msg);
-    len_msg_net = htonl(len_msg);
-    send(i, (char*)&len_msg_net, 4, 0);
+    printf("loc_request %d\n", LOC_REQUEST);
+    int loc_request_net = htonl(LOC_REQUEST);
+    send(sockfd, (char*)&loc_request_net, 4, 0);
+
+    int len_name_net = htonl(sizeof(name)); 
+    printf("size of name %d\n", sizeof(name));
+    send(sockfd, (char*)&len_name_net, sizeof(len_name_net), 0);
+
+    //send(sockfd, (char*)&argTypes, sizeof(argTypes), 0);
+
+
+
+    printf("done\n");
+
     //int n = write(sockfd, (char*)len_msg_net, sizeof(len_msg_net));
 
     // Then write data
-    int n = write(sockfd, request_msg, strlen(request_msg));
-   
+    //int n = write(sockfd, request_msg, strlen(request_msg));
+    int n = 0;
     char buffer[256];
-    n = read(sockfd, buffer, 255);
-    if (n < 0){
-        return -1;
-    }
-    if (buffer[0] != LOC_SUCCESS){
-        return -1;
-    }
+    // n = read(sockfd, buffer, 255);
+    // if (n < 0){
+    //     return -1;
+    // }
+    // if (buffer[0] != LOC_SUCCESS){
+    //     return -1;
+    // }
     close(sockfd);
     
-    struct hostent *server_identifier = gethostbyname(strtok(buffer, " ")); 
-    int server_port = atoi(strtok(buffer, " "));
+    // struct hostent *server_identifier = gethostbyname(strtok(buffer, " ")); 
+    // int server_port = atoi(strtok(buffer, " "));
 
-    sockfd = connectToSocket(server_port, server_identifier);
-    if (sockfd < 0){
-        return -1;
-    }
+    // sockfd = connectToSocket(server_port, server_identifier);
+    // if (sockfd < 0){
+    //     return -1;
+    // }
 
-    // msg format: Length EXECUTE name argTypes args
-    char response_msg[sizeof(EXECUTE) + sizeof(name) + sizeof(argTypes) + sizeof(args) + 3];
-    sprintf(str, "%d", EXECUTE);
-    strcpy(request_msg, str);
-    strcat(response_msg, " ");
-    strcat(response_msg, name);
-    strcat(response_msg, " ");
-    for (i=0; i <= sizeof(argTypes)/sizeof(argTypes[0]); i++){
-        char ret[4];
-        ret[0] = (char) (argTypes[i] >> 24) & 0xff;
-        ret[1] = (char) (argTypes[i] >> 16) & 0xff;
-        ret[2] = (char) (argTypes[i] >>  8) & 0xff;
-        ret[3] = (char) argTypes[i] & 0xff;
-        strcat(request_msg, ret);
-    }
-    strcat(response_msg, " ");
-    for (i=0; i <= sizeof(argTypes)/sizeof(argTypes[0]); i++){
-        strcat(response_msg, toString(args[i],argTypes[i]));
-    }
-    n = write(sockfd, response_msg, strlen(response_msg));
+    // // msg format: Length EXECUTE name argTypes args
+    // char response_msg[sizeof(EXECUTE) + sizeof(name) + sizeof(argTypes) + sizeof(args) + 3];
+    // sprintf(str, "%d", EXECUTE);
+    // strcpy(request_msg, str);
+    // strcat(response_msg, " ");
+    // strcat(response_msg, name);
+    // strcat(response_msg, " ");
+    // for (i=0; i <= sizeof(argTypes)/sizeof(argTypes[0]); i++){
+    //     char ret[4];
+    //     ret[0] = (char) (argTypes[i] >> 24) & 0xff;
+    //     ret[1] = (char) (argTypes[i] >> 16) & 0xff;
+    //     ret[2] = (char) (argTypes[i] >>  8) & 0xff;
+    //     ret[3] = (char) argTypes[i] & 0xff;
+    //     strcat(request_msg, ret);
+    // }
+    // strcat(response_msg, " ");
+    // for (i=0; i <= sizeof(argTypes)/sizeof(argTypes[0]); i++){
+    //     strcat(response_msg, toString(args[i],argTypes[i]));
+    // }
+    // n = write(sockfd, response_msg, strlen(response_msg));
 
-    n = read(sockfd, buffer, 255);
-    if (n < 0){
-        return -1;
-    }
-    if (buffer[0] != EXECUTE_SUCCESS){
-        return -1;
-    }
-    close(sockfd);
+    // n = read(sockfd, buffer, 255);
+    // if (n < 0){
+    //     return -1;
+    // }
+    // if (buffer[0] != EXECUTE_SUCCESS){
+    //     return -1;
+    // }
+    // close(sockfd);
     return 0;
 }
 
