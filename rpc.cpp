@@ -203,7 +203,7 @@ int connectToSocket(int port, hostent* server){
 }
 
 int rpcCall(char* name, int* argTypes, void** args){
-    printf("START\n");
+    printf("START CONNECT TO BINDER\n");
     // Connect to binder
     int binder_port = atoi(getenv("BINDER_PORT"));
     struct hostent *binder_address = gethostbyname(getenv("BINDER_ADDRESS"));
@@ -239,7 +239,7 @@ int rpcCall(char* name, int* argTypes, void** args){
         send(sockfd, (char*)&argType_net, 2, 0);
     }
 
-    printf("done\n");
+    printf("done sending to binder\n");
 
     int code;
     int code_net;
@@ -272,47 +272,57 @@ int rpcCall(char* name, int* argTypes, void** args){
     recv(sockfd, server_addr, len_server_addr, 0);
     printf("server_addr %s\n", server_addr);
 
-
-    
     close(sockfd);
-    
-    // struct hostent *server_identifier = gethostbyname(strtok(buffer, " ")); 
-    // int server_port = atoi(strtok(buffer, " "));
+    printf("done receiving from binder");
 
-    // sockfd = connectToSocket(server_port, server_identifier);
-    // if (sockfd < 0){
-    //     return -1;
-    // }
+    printf("START CONNECT TO SERVER\n");
+    // Connect to server
+    int hostent *server_address = gethostbyname(server_addr);
+    sockfd = connectToSocket(server_port, server_address); 
+    if (sockfd < 0){
+        return -1;
+    }
 
-    // // msg format: Length EXECUTE name argTypes args
-    // char response_msg[sizeof(EXECUTE) + sizeof(name) + sizeof(argTypes) + sizeof(args) + 3];
-    // sprintf(str, "%d", EXECUTE);
-    // strcpy(request_msg, str);
-    // strcat(response_msg, " ");
-    // strcat(response_msg, name);
-    // strcat(response_msg, " ");
-    // for (i=0; i <= sizeof(argTypes)/sizeof(argTypes[0]); i++){
-    //     char ret[4];
-    //     ret[0] = (char) (argTypes[i] >> 24) & 0xff;
-    //     ret[1] = (char) (argTypes[i] >> 16) & 0xff;
-    //     ret[2] = (char) (argTypes[i] >>  8) & 0xff;
-    //     ret[3] = (char) argTypes[i] & 0xff;
-    //     strcat(request_msg, ret);
-    // }
-    // strcat(response_msg, " ");
-    // for (i=0; i <= sizeof(argTypes)/sizeof(argTypes[0]); i++){
-    //     strcat(response_msg, toString(args[i],argTypes[i]));
-    // }
-    // n = write(sockfd, response_msg, strlen(response_msg));
+    // request_msg format: EXECUTE len_name name len_argTypes argTypes len_args args
 
-    // n = read(sockfd, buffer, 255);
-    // if (n < 0){
-    //     return -1;
-    // }
-    // if (buffer[0] != EXECUTE_SUCCESS){
-    //     return -1;
-    // }
-    // close(sockfd);
+    printf("execute %d\n", EXECUTE);
+    int execute_net = htonl(EXECUTE);
+    send(sockfd, (char*)&execute_net, 4, 0);
+
+    printf("size of name %d\n", len_name);
+    send(sockfd, (char*)&len_name_net, sizeof(len_name_net), 0);
+
+    printf("name %s\n", name);
+    send(sockfd, name, len_name, 0);
+
+    printf("size of argTypes %d\n", len_argTypes);
+    send(sockfd, (char*)&len_argTypes_net, 4, 0);
+
+    for (i=0; i<len_argTypes/2; i++){
+        int argType = argTypes[i];
+        int argType_net = htonl(argType);
+        printf("argTypes %d\n", argType);
+        send(sockfd, (char*)&argType_net, 2, 0);
+    }
+
+    int len_args = sizeof(args);
+    int len_args_net = htonl(len_args);
+    printf("size of args %d\n", len_args);
+    send(sockfd, (char*)&len_args_net, 4, 0);
+
+    for (i=0; i<len_args/4; i++){
+        int arg = args[i];
+        int arg_net = htonl(arg);
+        printf("argTypes %d\n", arg);
+        send(sockfd, (char*)&arg_net, 4, 0);
+    }
+
+    printf("done sending to server\n");
+
+    // Receive from server
+
+    close(sockfd);
+    printf("done receiving from binder");
 
     free(server_addr);
     return 0;
