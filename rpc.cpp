@@ -190,6 +190,26 @@ void *listenForClient(void * id) {
                         // Now we have all the info we need to run the function
                         // So run it
 
+                        char * functionName = name;
+                        int res;
+                        switch(functionName) {
+                            case: "f0" :
+                                res = f0_Skel(argTypes, args);
+                            break;
+                            case: "f1" :
+                                res = f1_Skel(argTypes, args);
+                            break;
+                            case: "f2" :
+                                res = f2_Skel(argTypes, args);
+                            break;
+                            case: "f3" :
+                                res = f3_Skel(argTypes, args);
+                            break;
+                            case: "f4" :
+                                res = f4_Skel(argTypes, args);
+                            break;
+                        }
+
 
                         free(name);
                     }
