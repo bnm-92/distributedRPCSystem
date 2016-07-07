@@ -240,12 +240,12 @@ int main(int argc, char* argv[]) {
                             int loc_success_net = htonl(LOC_SUCCESS);
                             send(i, (char*)&loc_success_net, 4, 0);
 
-                            int server_port = 1234;//s.sockfd;
+                            int server_port = s.sockfd;
                             int server_port_net = htonl(server_port);
                             printf("server port %d\n", server_port);
                             send(i, (char*)&server_port_net, 4, 0);
 
-                            char* server_addr = "test";//s.address;
+                            char* server_addr = s.address;
                             
                             int len_server_addr = strlen(server_addr);
                             int len_server_addr_net = htonl(len_server_addr);
