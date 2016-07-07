@@ -475,9 +475,6 @@ int rpcRegister(char* name, int* argTypes, skeleton f){
 }
 
 int rpcExecute(){
-    printf("starting to execute");
-    pthread_create(&clientThread, NULL, listenForClient, (void*)0);
-    printf("ending exexution");
     return 0;
 }
 
