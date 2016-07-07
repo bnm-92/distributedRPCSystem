@@ -272,22 +272,7 @@ int main(int argc, char* argv[]) {
                         char* server_identifier = recv_string(i);
                         int server_port = recv_integer(i);
                         char* name = recv_string(i);
-
-                        // length of argTypes
-                        int len_argTypes_net;
-                        int len_argTypes;
-                        recv(i, &len_argTypes_net, 4, 0);
-                        len_argTypes = ntohl(len_argTypes_net);
-                        printf("len_argTypes %d\n", len_argTypes);
-
-                        int argTypes[len_argTypes/2];
-                        int j;
-                        for (j=0; j<len_argTypes/2; j++){
-                            int argType_net;
-                            recv(i, &argType_net, 2, 0);
-                            argTypes[j] = ntohl(argType_net);
-                            printf("argType %d\n", argTypes[j]);
-                        }
+                        int* argTypes = recv_argTypes(i);
 
                         // Register server info to database
                         serverFunction server_function = {name, argTypes, server_port, server_identifier, i};
@@ -295,18 +280,14 @@ int main(int argc, char* argv[]) {
                         printf("Added function %s at port %d to db\n", server_function.name, server_function.sockfd);
 
                         // Stub code assuming we register successfully
-                        printf("register_success %d\n", REGISTER_SUCCESS);
-                        int register_success_net = htonl(REGISTER_SUCCESS);
-                        send(i, (char*)&register_success_net, 4, 0);
+                        send_integer(i, REGISTER_SUCCESS);
 
                         // This integer will hold any warnings or errors
                         int error = 0;
-                        int error_net = htonl(error);
-                        printf("error %d\n", error);
-                        send(i, (char*)&error_net, 4, 0);
+                        send_integer(i, error);
                         
-
                         free(name);
+                        free(argTypes);
 
                     }
                 } // END handle data from client
