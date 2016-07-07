@@ -197,6 +197,8 @@ int rpcInit(){
 
     // print your server name and port here
     gethostname(hostIP, INET6_ADDRSTRLEN);
+    printf("SERVER_ADDRESS %s\n", hostIP);    
+    printf("SERVER_ADDRESS_PORT %d\n", htons(port_num));
     
     SERVER_ADDRESS = hostIP;
     PORT = htons(port_num);
@@ -342,12 +344,12 @@ int rpcCall(char* name, int* argTypes, void** args){
     printf("server_addr %s\n", server_addr);
 
     close(sockfd);
-    printf("done receiving from binder");
+    printf("done receiving from binder\n");
 
     printf("START CONNECT TO SERVER\n");
     // Connect to server
     struct hostent *server_address = gethostbyname(server_addr);
-    sockfd = connectToSocket(server_port, server_address); 
+    sockfd = connectToSocket(server_port, server_address);
     if (sockfd < 0){
         return -1;
     }

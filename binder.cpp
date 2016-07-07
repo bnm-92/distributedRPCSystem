@@ -23,8 +23,9 @@ using namespace std;
 
 struct serverFunction {
 	char* name;
-	void* argTypes;
+	int* argTypes;
 	int sockfd;
+    char* address;
 };
 
 struct database {
@@ -211,26 +212,48 @@ int main(int argc, char* argv[]) {
                             printf("argType %d\n", argTypes[i]);
                         }
 
-                        // Determine which server info to return here
+                        // Determine which server info to return
+                        serverFunction s;
+                        bool found_server = false;
+                        for(std::vector<serverFunction>::size_type i = 0; i != db.functions.size(); i++) {
+                            if (db.functions[i].name == name && sizeof(argTypes) == sizeof(db.functions[i].argTypes)){
+                                bool same = true;
+                                for (j=0;j<sizeof(argTypes)/2; j++){
+                                    if (argTypes[j] != db.functions[i].argTypes[j]){
+                                        same = false;
+                                    }
+                                }
+                                if (same){
+                                    s = db.functions.at(i);
+                                    found_server = true;
+                                    printf("found a server with a matching function\n");
+                                    break;
+                                }
+                            }
+                        }
+                        if (!found_server){
+                            printf("loc_failure %d\n", LOC_FAILURE);
+                            int loc_failure_net = htonl(LOC_FAILURE);
+                            send(i, (char*)&loc_failure_net, 4, 0);
+                        } else {
+                            printf("loc_success %d\n", LOC_SUCCESS);
+                            int loc_success_net = htonl(LOC_SUCCESS);
+                            send(i, (char*)&loc_success_net, 4, 0);
 
-                        // Stub code assuming we find a server
-                        printf("loc_success %d\n", LOC_SUCCESS);
-                        int loc_success_net = htonl(LOC_SUCCESS);
-                        send(i, (char*)&loc_success_net, 4, 0);
+                            int server_port = 1234;//s.sockfd;
+                            int server_port_net = htonl(server_port);
+                            printf("server port %d\n", server_port);
+                            send(i, (char*)&server_port_net, 4, 0);
 
-                        int server_port = 1234;
-                        int server_port_net = htonl(server_port);
-                        printf("server port %d\n", server_port);
-                        send(i, (char*)&server_port_net, 4, 0);
+                            char* server_addr = "test";//s.address;
+                            
+                            int len_server_addr = strlen(server_addr);
+                            int len_server_addr_net = htonl(len_server_addr);
+                            printf("size of server_addr %d\n", len_server_addr);
+                            send(i, (char*)&len_server_addr_net, sizeof(len_server_addr_net), 0);
 
-                        char* server_addr = "Some server address";
-                        
-                        int len_server_addr = strlen(server_addr);
-                        int len_server_addr_net = htonl(len_server_addr);
-                        printf("size of server_addr %d\n", len_server_addr);
-                        send(i, (char*)&len_server_addr_net, sizeof(len_server_addr_net), 0);
-
-                        send(i, server_addr, len_server_addr, 0);
+                            send(i, server_addr, len_server_addr, 0);
+                        }
 
 
                         free(name);
@@ -285,7 +308,7 @@ int main(int argc, char* argv[]) {
                         }
 
                         // Register server info to database
-                        serverFunction server_function = {name, argTypes, server_port};
+                        serverFunction server_function = {name, argTypes, server_port, server_identifier};
                         db.functions.push_back(server_function);
                         printf("Added function %s at port %d to db\n", server_function.name, server_function.sockfd);
 
