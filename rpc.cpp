@@ -13,8 +13,6 @@
 #include <arpa/inet.h>
 #include <pthread.h>
 
-#define PORT_ZERO 0
-
 int sockfdBinder;
 fd_set master;    // master file descriptor list
 fd_set read_fds;  // temp file descriptor list for select()
@@ -164,8 +162,8 @@ int rpcInit(){
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_flags = AI_PASSIVE;
-    if ((rv = getaddrinfo(NULL, PORT_ZERO, &hints, &ai)) != 0) {
-        // fprintf(stderr, "selectserver: %s\n", gai_strerror(rv));
+    if ((rv = getaddrinfo(NULL, "0", &hints, &ai)) != 0) {
+        fprintf(stderr, "selectserver: %s\n", gai_strerror(rv));
         exit(1);
     }
     int port_num;
@@ -206,7 +204,7 @@ int rpcInit(){
     freeaddrinfo(ai); // all done with this
 
     //create a thread for listening purposes
-    pthread_create(&clientThread, NULL, listenForClient, (void*)0);
+    //pthread_create(&clientThread, NULL, listenForClient, (void*)0);
 
     // connect to the binder with a separate socket and keep it open
     struct addrinfo hintsB, *servinfoB, *pB;
@@ -402,54 +400,45 @@ int rpcCacheCall(char* name, int* argTypes, void** args){
 }
 
 int rpcRegister(char* name, int* argTypes, skeleton f){
-    printf("START CONNECT TO BINDER\n");
-    // Connect to binder - do we store this globally and keep it open?
-    int binder_port = atoi(getenv("BINDER_PORT"));
-    struct hostent *binder_address = gethostbyname(getenv("BINDER_ADDRESS"));
-    int sockfd = connectToSocket(binder_port, binder_address); 
-    if (sockfd < 0){
-        return -1;
-    }
-
     // REGISTER server_identifier_len server_identifier port len_name name len_argTypes argTypes 
     int i;
     char* server_identifier = "some server identifier";
 
     printf("register %d\n", REGISTER);
     int register_net = htonl(REGISTER);
-    send(sockfd, (char*)&register_net, 4, 0);
+    send(sockfdBinder, (char*)&register_net, 4, 0);
 
     int len_server_identifier = strlen(server_identifier);
     int len_server_identifier_net = htonl(len_server_identifier);
     printf("size of server_identifier %d\n", len_server_identifier);
-    send(sockfd, (char*)&len_server_identifier_net, sizeof(len_server_identifier_net), 0);
+    send(sockfdBinder, (char*)&len_server_identifier_net, sizeof(len_server_identifier_net), 0);
 
     printf("server_identifier %s\n", server_identifier);
-    send(sockfd, name, len_server_identifier, 0);
+    send(sockfdBinder, name, len_server_identifier, 0);
 
     int server_port = 1234;
     printf("server port %d\n", server_port);
     int server_port_net = htonl(server_port);
-    send(sockfd, (char*)&server_port_net, 4, 0);
+    send(sockfdBinder, (char*)&server_port_net, 4, 0);
 
     int len_name = strlen(name);
     int len_name_net = htonl(len_name);
     printf("size of name %d\n", len_name);
-    send(sockfd, (char*)&len_name_net, sizeof(len_name_net), 0);
+    send(sockfdBinder, (char*)&len_name_net, sizeof(len_name_net), 0);
 
     printf("name %s\n", name);
-    send(sockfd, name, len_name, 0);
+    send(sockfdBinder, name, len_name, 0);
 
     int len_argTypes = sizeof(argTypes);
     int len_argTypes_net = htonl(len_argTypes);
     printf("size of argTypes %d\n", len_argTypes);
-    send(sockfd, (char*)&len_argTypes_net, 4, 0);
+    send(sockfdBinder, (char*)&len_argTypes_net, 4, 0);
 
     for (i=0; i<len_argTypes/2; i++){
         int argType = argTypes[i];
         int argType_net = htonl(argType);
         printf("argTypes %d\n", argType);
-        send(sockfd, (char*)&argType_net, 2, 0);
+        send(sockfdBinder, (char*)&argType_net, 2, 0);
     }
 
     printf("done registering to binder\n");
@@ -457,24 +446,25 @@ int rpcRegister(char* name, int* argTypes, skeleton f){
     // recv either REGISTER_SUCCESS or REGISTER_FAILURE
     int code;
     int code_net;
-    recv(sockfd, &code_net, 4, 0);
+    recv(sockfdBinder, &code_net, 4, 0);
     code = ntohl(code_net);
     printf("code %d\n", code);
 
     int error;
     int error_net;
-    recv(sockfd, &error_net, 4, 0);
+    recv(sockfdBinder, &error_net, 4, 0);
     error = ntohl(error_net);
     printf("error %d\n", error);
 
     printf("done receiving from binder\n");
 
-    close(sockfd);
+    close(sockfdBinder);
 
     return 0;
 }
 
 int rpcExecute(){
+    listenForClient((void*)0);
     return 0;
 }
 
