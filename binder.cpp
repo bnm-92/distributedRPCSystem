@@ -303,8 +303,8 @@ int main(int argc, char* argv[]) {
                         for (j=0; j<len_argTypes/2; j++){
                             int argType_net;
                             recv(i, &argType_net, 2, 0);
-                            argTypes[i] = ntohl(argType_net);
-                            printf("argType %d\n", argTypes[i]);
+                            argTypes[j] = ntohl(argType_net);
+                            printf("argType %d\n", argTypes[j]);
                         }
 
                         // Register server info to database

@@ -124,16 +124,13 @@ void *listenForClient(void * id) {
                         int j;
                         for (j=0; j<len_argTypes/2; j++){
                             int argType_net;
-                            recv(i, &argType_net, 2, 0);
+                            recv(i, &argType_net, 4, 0);
                             argTypes[j] = ntohl(argType_net);
                             printf("argType %d\n", argTypes[j]);
+                            printf("argType net %d\n", argType_net);
                         }
 
-                        for (j=0; j<len_argTypes/2 - 1; j++){
-                            printf("argType test %d\n", argTypes[j]);
-                        }
-
-                        // length of argTypes
+                        // length of args
                         int len_args_net;
                         int len_args;
                         recv(i, &len_args_net, 4, 0);
@@ -444,7 +441,8 @@ int rpcCall(char* name, int* argTypes, void** args){
         int argType = argTypes[i];
         int argType_net = htonl(argType);
         printf("argTypes %d\n", argType);
-        send(sockfd, (char*)&argType_net, 2, 0);
+        printf("argTypes net %d\n", argType_net);
+        send(sockfd, (char*)&argType_net, 4, 0);
     }
 
     int len_args = sizeof(args);
