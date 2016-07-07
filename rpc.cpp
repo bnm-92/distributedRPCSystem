@@ -79,7 +79,7 @@ void send_argTypes(int sockid, int* argTypes){
         int argType = argTypes[i];
         int argType_net = htonl(argType);
         printf("argTypes %d\n", argType);
-        send(sockfdBinder, (char*)&argType_net, 2, 0);
+        send(sockid, (char*)&argType_net, 2, 0);
     }
 }
 
