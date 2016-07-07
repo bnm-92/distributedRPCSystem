@@ -86,7 +86,7 @@ void send_argTypes(int sockid, int* argTypes){
 int recv_integer(int sockid){
     int val;
     int val_net;
-    recv(sockfdBinder, &val_net, 4, 0);
+    recv(sockid, &val_net, 4, 0);
     val = ntohl(val_net);
     printf("received %d from %d\n", val, sockid);
     return val;
