@@ -26,6 +26,7 @@ struct serverFunction {
 	int* argTypes;
 	int sockfd;
     char* address;
+    int localfd;
 };
 
 struct database {
@@ -171,8 +172,15 @@ int main(int argc, char* argv[]) {
                     if ((nbytes = recv(i, &code_net, 4, 0)) <= 0) {
                         //got error or connection closed by client
                         if (nbytes == 0) {
-                            //connection closed
+                            //connection closed - if it was a server remove from database
                             printf("selectserver: socket %d hung up\n", i);
+                            for(std::vector<serverFunction>::size_type j = 0; j != db.functions.size();) {
+                                if(db.functions[j].localfd == i){
+                                    db.functions.erase(db.functions.begin() + j);
+                                } else {
+                                    j++;
+                                }
+                            }
                         } else {
                             perror("recv");
                         }
@@ -308,7 +316,7 @@ int main(int argc, char* argv[]) {
                         }
 
                         // Register server info to database
-                        serverFunction server_function = {name, argTypes, server_port, server_identifier};
+                        serverFunction server_function = {name, argTypes, server_port, server_identifier, i};
                         db.functions.push_back(server_function);
                         printf("Added function %s at port %d to db\n", server_function.name, server_function.sockfd);
 
