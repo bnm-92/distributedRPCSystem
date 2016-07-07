@@ -1,5 +1,5 @@
 #include "rpc.h"
-
+#include "server_function_skels.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
