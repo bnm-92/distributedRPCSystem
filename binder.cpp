@@ -216,7 +216,7 @@ int main(int argc, char* argv[]) {
                         serverFunction s;
                         bool found_server = false;
                         for(std::vector<serverFunction>::size_type i = 0; i != db.functions.size(); i++) {
-                            if (db.functions[i].name == name && sizeof(argTypes) == sizeof(db.functions[i].argTypes)){
+                            if (strcmp(db.functions[i].name,name) == 0 && len_argTypes == sizeof(db.functions[i].argTypes)){
                                 bool same = true;
                                 for (j=0;j<sizeof(argTypes)/2; j++){
                                     if (argTypes[j] != db.functions[i].argTypes[j]){
