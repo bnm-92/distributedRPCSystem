@@ -58,13 +58,13 @@ char* recv_string(int sockid){
 }
 
 int* recv_argTypes(int sockid){
-    int len_argTypes = recv_integer(sockid);
-    int argTypes[len_argTypes/2];
-    for (int i=0; i<len_argTypes/2; i++){
+    int size_argTypes = recv_integer(sockid);
+    int * argTypes = (int*)malloc(size_argTypes);
+    for (int i=0; i<size_argTypes/2; i++){
         int argType_net;
         recv(sockid, &argType_net, 2, 0);
         argTypes[i] = ntohl(argType_net);
         printf("argType %d\n", argTypes[i]);
     }     
-
+    return argTypes;
 }
