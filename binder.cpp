@@ -4,6 +4,7 @@
 */
 
 #include "rpc.h"
+#include "network.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -268,36 +269,9 @@ int main(int argc, char* argv[]) {
 
 
                     } else if (code == REGISTER){
-                        // length of server_identifier
-                        int len_server_identifier_net;
-                        int len_server_identifier;
-                        recv(i, &len_server_identifier_net, 4, 0);
-                        len_server_identifier = ntohl(len_server_identifier_net);
-                        printf("len_server_identifier %d\n", len_server_identifier);
-
-                        // server_identifier
-                        char * server_identifier = (char*)malloc(sizeof(char)*len_server_identifier);
-                        recv(i, server_identifier, len_server_identifier, 0);
-                        printf("server_identifier %s\n", server_identifier);
-
-                        // server port
-                        int server_port_net;
-                        int server_port;
-                        recv(i, &server_port_net, 4, 0);
-                        server_port = ntohl(server_port_net);
-                        printf("server_port %d\n", server_port);
-
-                        // length of name
-                        int len_name_net;
-                        int len_name;
-                        recv(i, &len_name_net, 4, 0);
-                        len_name = ntohl(len_name_net);
-                        printf("len_name %d\n", len_name);
-
-                        // name
-                        char * name = (char*)malloc(sizeof(char)*len_name);
-                        recv(i, name, len_name, 0);
-                        printf("name %s\n", name);
+                        char* server_identifier = recv_string(i);
+                        int server_port = recv_integer(i);
+                        char* name = recv_string(i);
 
                         // length of argTypes
                         int len_argTypes_net;
