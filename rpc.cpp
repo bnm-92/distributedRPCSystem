@@ -178,7 +178,12 @@ void *listenForClient(void * id) {
                             } else if (argTypes[j] == double_output || argTypes[j] == double_input){
                                 printf("deal with double");
                             } else if (argTypes[j] == float_output || argTypes[j] == float_input){
-                                printf("deal with float");
+                                float arg;
+                                float arg_net;
+                                recv(i, &arg_net, 4, 0);
+                                arg = ntohl(arg_net);
+                                printf("arg %f\n", arg);
+                                args[j] = &arg;
                             } else {
                                 printf("Error argType undefined %d\n", argTypes[j]);
                             }
@@ -474,7 +479,10 @@ int rpcCall(char* name, int* argTypes, void** args){
         } else if (argTypes[i] == double_output || argTypes[i] == double_input){
             printf("deal with double");
         } else if (argTypes[i] == float_output || argTypes[i] == float_input){
-            printf("deal with float");
+            float arg = *((float*)args[i]);
+            float arg_net = htonl(arg);
+            printf("arg %f\n", arg);
+            send(sockfd, (char*)&arg_net, 4, 0);
         } else {
             printf("Error argType undefined %d\n", argTypes[i]);
             return -1;
