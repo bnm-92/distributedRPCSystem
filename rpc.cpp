@@ -198,7 +198,8 @@ int rpcInit(){
     printf("SERVER_ADDRESS %s\n", hostIP);    
     printf("SERVER_ADDRESS_PORT %d\n", htons(port_num));
     
-    SERVER_ADDRESS = hostIP;
+    SERVER_ADDRESS = (char*)malloc(sizeof(hostIP));
+    SERVER_ADDRESS = strncpy(SERVER_ADDRESS, hostIP, sizeof(hostIP));
     PORT = htons(port_num);
 
     freeaddrinfo(ai); // all done with this
@@ -278,6 +279,7 @@ int rpcCall(char* name, int* argTypes, void** args){
     struct hostent *binder_address = gethostbyname(getenv("BINDER_ADDRESS"));
     int sockfd = connectToSocket(binder_port, binder_address); 
     if (sockfd < 0){
+        printf(":(\n");
         return -1;
     }
 
@@ -408,17 +410,16 @@ int rpcRegister(char* name, int* argTypes, skeleton f){
     int register_net = htonl(REGISTER);
     send(sockfdBinder, (char*)&register_net, 4, 0);
 
-    int len_server_identifier = strlen(server_identifier);
+    int len_server_identifier = strlen(SERVER_ADDRESS);
     int len_server_identifier_net = htonl(len_server_identifier);
     printf("size of server_identifier %d\n", len_server_identifier);
     send(sockfdBinder, (char*)&len_server_identifier_net, sizeof(len_server_identifier_net), 0);
 
-    printf("server_identifier %s\n", server_identifier);
-    send(sockfdBinder, name, len_server_identifier, 0);
+    printf("server_identifier %s\n", SERVER_ADDRESS);
+    send(sockfdBinder, SERVER_ADDRESS, len_server_identifier, 0);
 
-    int server_port = 1234;
-    printf("server port %d\n", server_port);
-    int server_port_net = htonl(server_port);
+    printf("server port %d\n", PORT);
+    int server_port_net = htonl(PORT);
     send(sockfdBinder, (char*)&server_port_net, 4, 0);
 
     int len_name = strlen(name);
@@ -469,6 +470,7 @@ int rpcExecute(){
 }
 
 int rpcTerminate(){
+    free(SERVER_ADDRESS);
     return 0;
 }
 
