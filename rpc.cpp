@@ -381,11 +381,49 @@ int rpcCall(char* name, int* argTypes, void** args){
     printf("size of args %d\n", len_args);
     send(sockfd, (char*)&len_args_net, 4, 0);
 
-    for (i=0; i<len_args/4; i++){
-        int arg = *((int *)args[i]);
-        int arg_net = htonl(arg);
-        printf("argTypes %d\n", arg);
-        send(sockfd, (char*)&arg_net, 4, 0);
+    // Define some types
+    int char_output = (1 << ARG_OUTPUT) | (ARG_CHAR << 16);
+    int char_input = (1 << ARG_INPUT) | (ARG_CHAR << 16);
+    int short_output = (1 << ARG_OUTPUT) | (ARG_SHORT << 16);
+    int short_input = (1 << ARG_INPUT) | (ARG_SHORT << 16);
+    int int_output = (1 << ARG_OUTPUT) | (ARG_INT << 16);
+    int int_input = (1 << ARG_INPUT) | (ARG_INT << 16);
+    int long_output = (1 << ARG_OUTPUT) | (ARG_LONG << 16);
+    int long_input = (1 << ARG_INPUT) | (ARG_LONG << 16);
+    int double_output = (1 << ARG_OUTPUT) | (ARG_DOUBLE << 16);
+    int double_input = (1 << ARG_INPUT) | (ARG_DOUBLE << 16);
+    int float_output = (1 << ARG_OUTPUT) | (ARG_FLOAT << 16);
+    int float_input = (1 << ARG_INPUT) | (ARG_FLOAT << 16);
+
+    // Last argType is always 0 so skip that one
+    for (i=0; i<len_argTypes/2 - 1; i++){
+        if (argTypes[i] == char_output || argTypes[i] == char_input){
+            char* arg = *((char**)args[i]);
+            printf("arg %c\n", arg);
+            send(sockfd, arg, 1, 0);
+        } else if (argTypes[i] == short_output || argTypes[i] == short_input){
+            short arg = *((short*)args[i]);
+            short arg_net = htons(arg);
+            printf("arg %d\n", arg);
+            send(sockfd, (char*)&arg_net, 2, 0);
+        } else if (argTypes[i] == int_output || argTypes[i] == int_input){
+            int arg = *((int*)args[i]);
+            int arg_net = htonl(arg);
+            printf("arg %d\n", arg);
+            send(sockfd, (char*)&arg_net, 4, 0);
+        } else if (argTypes[i] == long_output || argTypes[i] == long_input){
+            long arg = *((long*)args[i]);
+            int arg_net = htonl(arg);
+            printf("arg %d\n", arg);
+            send(sockfd, (char*)&arg_net, 4, 0);
+        } else if (argTypes[i] == double_output || argTypes[i] == double_input){
+            printf("deal with double");
+        } else if (argTypes[i] == float_output || argTypes[i] == float_input){
+            printf("deal with float");
+        } else {
+            printf("Error argType undefined %d\n", argTypes[i]);
+            return -1;
+        }
     }
 
     printf("done sending to server\n");
