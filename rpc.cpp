@@ -26,6 +26,20 @@ pthread_t clientThread;
 char* SERVER_ADDRESS;
 int PORT;
 
+// Define some types
+int char_output = (1 << ARG_OUTPUT) | (ARG_CHAR << 16);
+int char_input = (1 << ARG_INPUT) | (ARG_CHAR << 16);
+int short_output = (1 << ARG_OUTPUT) | (ARG_SHORT << 16);
+int short_input = (1 << ARG_INPUT) | (ARG_SHORT << 16);
+int int_output = (1 << ARG_OUTPUT) | (ARG_INT << 16);
+int int_input = (1 << ARG_INPUT) | (ARG_INT << 16);
+int long_output = (1 << ARG_OUTPUT) | (ARG_LONG << 16);
+int long_input = (1 << ARG_INPUT) | (ARG_LONG << 16);
+int double_output = (1 << ARG_OUTPUT) | (ARG_DOUBLE << 16);
+int double_input = (1 << ARG_INPUT) | (ARG_DOUBLE << 16);
+int float_output = (1 << ARG_OUTPUT) | (ARG_FLOAT << 16);
+int float_input = (1 << ARG_INPUT) | (ARG_FLOAT << 16);
+
 void *listenForClient(void * id) {
     int i;
     // listen
@@ -111,8 +125,12 @@ void *listenForClient(void * id) {
                         for (j=0; j<len_argTypes/2; j++){
                             int argType_net;
                             recv(i, &argType_net, 2, 0);
-                            argTypes[i] = ntohl(argType_net);
-                            printf("argType %d\n", argTypes[i]);
+                            argTypes[j] = ntohl(argType_net);
+                            printf("argType %d\n", argTypes[j]);
+                        }
+
+                        for (j=0; j<len_argTypes/2 - 1; j++){
+                            printf("argType test %d\n", argTypes[j]);
                         }
 
                         // length of argTypes
@@ -122,12 +140,51 @@ void *listenForClient(void * id) {
                         len_args = ntohl(len_args_net);
                         printf("len_args %d\n", len_args);
 
-                        int args[len_args/4];
-                        for (j=0; j<len_args/2; j++){
-                            int arg_net;
-                            recv(i, &arg_net, 4, 0);
-                            args[i] = ntohl(arg_net);
-                            printf("arg %d\n", args[i]);
+                        // stores args of different types
+                        void **args;
+                        args = (void **)malloc((len_argTypes/2 - 1) * sizeof(void *));
+                        printf("size of args %lu\n", len_argTypes/2 - 1);
+                        printf("size of void* %lu\n", sizeof(void *));
+                        printf("size of both %lu\n", (len_argTypes/2 - 1) * sizeof(void *));
+                        // Last argType is always 0 so skip that one
+                        for (j=0; j<len_argTypes/2 - 1; j++){
+                            printf("loop %d arg type %d \n", j, argTypes[j]);
+                            if (argTypes[j] == char_output || argTypes[j] == char_input){
+                                char arg;
+                                char arg_net[1];
+                                recv(i, arg_net, 1, 0);
+                                arg = arg_net[0];
+                                printf("arg %c\n", arg);
+                                args[j] = &arg;
+                            } else if (argTypes[j] == short_output || argTypes[j] == short_input){
+                                short arg;
+                                short arg_net;
+                                recv(i, &arg_net, 2, 0);
+                                arg = ntohs(arg_net);
+                                printf("arg %d\n", arg);
+                                args[j] = &arg;
+                            } else if (argTypes[j] == int_output || argTypes[j] == int_input){
+                                printf("test int\n");
+                                int arg;
+                                int arg_net;
+                                recv(i, &arg_net, 4, 0);
+                                arg = ntohl(arg_net);
+                                printf("arg %d\n", arg);
+                                args[j] = (void *)&arg;
+                            } else if (argTypes[j] == long_output || argTypes[j] == long_input){
+                                long arg;
+                                long arg_net;
+                                recv(i, &arg_net, 4, 0);
+                                arg = ntohl(arg_net);
+                                printf("arg %d\n", arg);
+                                args[j] = &arg;
+                            } else if (argTypes[j] == double_output || argTypes[j] == double_input){
+                                printf("deal with double");
+                            } else if (argTypes[j] == float_output || argTypes[j] == float_input){
+                                printf("deal with float");
+                            } else {
+                                printf("Error argType undefined %d\n", argTypes[j]);
+                            }
                         }
 
                         // Now we have all the info we need to run the function
@@ -394,20 +451,6 @@ int rpcCall(char* name, int* argTypes, void** args){
     int len_args_net = htonl(len_args);
     printf("size of args %d\n", len_args);
     send(sockfd, (char*)&len_args_net, 4, 0);
-
-    // Define some types
-    int char_output = (1 << ARG_OUTPUT) | (ARG_CHAR << 16);
-    int char_input = (1 << ARG_INPUT) | (ARG_CHAR << 16);
-    int short_output = (1 << ARG_OUTPUT) | (ARG_SHORT << 16);
-    int short_input = (1 << ARG_INPUT) | (ARG_SHORT << 16);
-    int int_output = (1 << ARG_OUTPUT) | (ARG_INT << 16);
-    int int_input = (1 << ARG_INPUT) | (ARG_INT << 16);
-    int long_output = (1 << ARG_OUTPUT) | (ARG_LONG << 16);
-    int long_input = (1 << ARG_INPUT) | (ARG_LONG << 16);
-    int double_output = (1 << ARG_OUTPUT) | (ARG_DOUBLE << 16);
-    int double_input = (1 << ARG_INPUT) | (ARG_DOUBLE << 16);
-    int float_output = (1 << ARG_OUTPUT) | (ARG_FLOAT << 16);
-    int float_input = (1 << ARG_INPUT) | (ARG_FLOAT << 16);
 
     // Last argType is always 0 so skip that one
     for (i=0; i<len_argTypes/2 - 1; i++){
