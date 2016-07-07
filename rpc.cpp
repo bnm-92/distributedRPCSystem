@@ -12,6 +12,9 @@
 #include <errno.h>
 #include <arpa/inet.h>
 #include <pthread.h>
+#include <vector>
+
+using namespace std;
 
 int sockfdBinder;
 fd_set master;    // master file descriptor list
@@ -39,6 +42,27 @@ int double_output = (1 << ARG_OUTPUT) | (ARG_DOUBLE << 16);
 int double_input = (1 << ARG_INPUT) | (ARG_DOUBLE << 16);
 int float_output = (1 << ARG_OUTPUT) | (ARG_FLOAT << 16);
 int float_input = (1 << ARG_INPUT) | (ARG_FLOAT << 16);
+
+struct serverFunction {
+	char* name;
+	int* argTypes;
+	int sockfd;
+    char* address;
+    int localfd;
+};
+
+vector<serverFunction> cache;
+
+int getargTypesLength(int* argTypes) {
+	// write code here
+	int n = 0;
+	while (*argTypes != 0) {
+		argTypes++;
+		n++;
+	}
+
+	return n;
+}
 
 void *listenForClient(void * id) {
     int i;
@@ -504,7 +528,7 @@ int rpcCall(char* name, int* argTypes, void** args){
 }
 
 int rpcCacheCall(char* name, int* argTypes, void** args){
-    return 0;
+	return 0;
 }
 
 int rpcRegister(char* name, int* argTypes, skeleton f){
