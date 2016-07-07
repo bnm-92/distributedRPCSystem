@@ -135,25 +135,19 @@ void *listenForClient(void * id) {
 
                         char * functionName = name;
                         int res;
-                        switch(functionName) {
-                            case: "f0" :
-                                res = f0_Skel(argTypes, args);
-                            break;
-                            case: "f1" :
-                                res = f1_Skel(argTypes, args);
-                            break;
-                            case: "f2" :
-                                res = f2_Skel(argTypes, args);
-                            break;
-                            case: "f3" :
-                                res = f3_Skel(argTypes, args);
-                            break;
-                            case: "f4" :
-                                res = f4_Skel(argTypes, args);
-                            break;
+
+                        if (strcmp(functionName, "f0")) {
+                            res = f0_Skel(argTypes, args);
+                        } else if (strcmp(functionName, "f1") == 0) {
+                            res = f1_Skel(argTypes, args);
+                        } else if (strcmp(functionName, "f2") == 0) {
+                            res = f2_Skel(argTypes, args);
+                        } else if (strcmp(functionName, "f3") == 0) {
+                            res = f3_Skel(argTypes, args);
+                        } else if (strcmp(functionName, "f4") == 0){
+                            res = f4_Skel(argTypes, args);
                         }
-
-
+                        
                         free(name);
                     }
                     
