@@ -327,20 +327,6 @@ int main(int argc, char* argv[]) {
                         free(name);
 
                     }
-
-                        //char* str2 = changeToTitle(buf); 
-                        // printf("to client: %s\n", str2);
-                        
-                        //len_msg = strlen(buf) + 1;
-                        // printf("%d\n", len_msg);
-                        //len_msg_net = htonl(len_msg);
-                        // printf("%d\n", len_msg_net);
-                        //send(i, (char*)&len_msg_net, 4, 0);
-			            
-                        //sendMessage(i, str2, len_msg);
-                        
-                        //free(buf);
-                    //}
                 } // END handle data from client
             } // END got new incoming connection
         } // END looping through file descriptors
