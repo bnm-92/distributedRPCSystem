@@ -53,6 +53,45 @@ struct serverFunction {
 
 vector<serverFunction> cache;
 
+void send_integer(int sockid, int val){
+    int net_val = htonl(val);
+    send(sockid, (char*)&net_val, 4, 0);
+    printf("sent %d to %d\n", val, sockid);
+}
+
+void send_string(int sockid, char* val){
+    int len = strlen(val);
+    int len_net = htonl(len);
+    send(sockid, (char*)&len_net, 4, 0);
+    printf("sent %d to %d\n", len, sockid);
+
+    send(sockid, val, len, 0);
+    printf("sent %s to %d\n", val, sockid);
+}
+
+void send_argTypes(int sockid, int* argTypes){
+    int len_argTypes = sizeof(argTypes);
+    int len_argTypes_net = htonl(len_argTypes);
+    send(sockid, (char*)&len_argTypes_net, 4, 0);
+    printf("sent %d to %d\n", len_argTypes, sockid);
+
+    for (int i=0; i<len_argTypes/2; i++){
+        int argType = argTypes[i];
+        int argType_net = htonl(argType);
+        printf("argTypes %d\n", argType);
+        send(sockfdBinder, (char*)&argType_net, 2, 0);
+    }
+}
+
+int recv_integer(int sockid){
+    int val;
+    int val_net;
+    recv(sockfdBinder, &val_net, 4, 0);
+    val = ntohl(val_net);
+    printf("received %d from %d\n", val, sockid);
+    return val;
+}
+
 int getargTypesLength(int* argTypes) {
 	// write code here
 	int n = 0;
@@ -533,63 +572,23 @@ int rpcCacheCall(char* name, int* argTypes, void** args){
 
 int rpcRegister(char* name, int* argTypes, skeleton f){
     // REGISTER server_identifier_len server_identifier port len_name name len_argTypes argTypes 
-    int i;
-
-    printf("register %d\n", REGISTER);
-    int register_net = htonl(REGISTER);
-    send(sockfdBinder, (char*)&register_net, 4, 0);
-
-    int len_server_identifier = strlen(SERVER_ADDRESS);
-    int len_server_identifier_net = htonl(len_server_identifier);
-    printf("size of server_identifier %d\n", len_server_identifier);
-    send(sockfdBinder, (char*)&len_server_identifier_net, sizeof(len_server_identifier_net), 0);
-
-    printf("server_identifier %s\n", SERVER_ADDRESS);
-    send(sockfdBinder, SERVER_ADDRESS, len_server_identifier, 0);
-
-    printf("server port %d\n", PORT);
-    int server_port_net = htonl(PORT);
-    send(sockfdBinder, (char*)&server_port_net, 4, 0);
-
-    int len_name = strlen(name);
-    int len_name_net = htonl(len_name);
-    printf("size of name %d\n", len_name);
-    send(sockfdBinder, (char*)&len_name_net, sizeof(len_name_net), 0);
-
-    printf("name %s\n", name);
-    send(sockfdBinder, name, len_name, 0);
-
-    int len_argTypes = sizeof(argTypes);
-    int len_argTypes_net = htonl(len_argTypes);
-    printf("size of argTypes %d\n", len_argTypes);
-    send(sockfdBinder, (char*)&len_argTypes_net, 4, 0);
-
-    for (i=0; i<len_argTypes/2; i++){
-        int argType = argTypes[i];
-        int argType_net = htonl(argType);
-        printf("argTypes %d\n", argType);
-        send(sockfdBinder, (char*)&argType_net, 2, 0);
-    }
-
-    printf("done registering to binder\n");
+    printf("sending server info to binder\n");
+    send_integer(sockfdBinder, REGISTER);
+    send_string(sockfdBinder, SERVER_ADDRESS);
+    send_integer(sockfdBinder, PORT);
+    send_string(sockfdBinder, name);
+    send_argTypes(sockfdBinder, argTypes);
+    printf("done sending server info to binder\n");
 
     // recv either REGISTER_SUCCESS or REGISTER_FAILURE
-    int code;
-    int code_net;
-    recv(sockfdBinder, &code_net, 4, 0);
-    code = ntohl(code_net);
-    printf("code %d\n", code);
+    printf("receiving info from binder to server");
+    int code = recv_integer(sockfdBinder);
+    int error = recv_integer(sockfdBinder);
+    printf("done receiving info from binder to server");
 
-    int error;
-    int error_net;
-    recv(sockfdBinder, &error_net, 4, 0);
-    error = ntohl(error_net);
-    printf("error %d\n", error);
-
-    printf("done receiving from binder\n");
-
-    close(sockfdBinder);
-
+    if (code == REGISTER_FAILURE){
+        return error;
+    }
     return 0;
 }
 
