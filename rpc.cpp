@@ -143,7 +143,7 @@ void *listenForClient(void * id) {
                         // stores args of different types
                         void **args;
                         args = (void **)malloc((len_argTypes/2 - 1) * sizeof(void *));
-                        printf("size of args %lu\n", len_argTypes/2 - 1);
+                        printf("size of args %d\n", len_argTypes/2 - 1);
                         printf("size of void* %lu\n", sizeof(void *));
                         printf("size of both %lu\n", (len_argTypes/2 - 1) * sizeof(void *));
                         // Last argType is always 0 so skip that one
@@ -176,7 +176,7 @@ void *listenForClient(void * id) {
                                 long arg_net;
                                 recv(i, &arg_net, 4, 0);
                                 arg = ntohl(arg_net);
-                                printf("arg %d\n", arg);
+                                printf("arg %ld\n", arg);
                                 args[j] = &arg;
                             } else if (argTypes[j] == double_output || argTypes[j] == double_input){
                                 printf("deal with double");
@@ -456,7 +456,7 @@ int rpcCall(char* name, int* argTypes, void** args){
     for (i=0; i<len_argTypes/2 - 1; i++){
         if (argTypes[i] == char_output || argTypes[i] == char_input){
             char* arg = *((char**)args[i]);
-            printf("arg %c\n", arg);
+            printf("arg %s\n", arg);
             send(sockfd, arg, 1, 0);
         } else if (argTypes[i] == short_output || argTypes[i] == short_input){
             short arg = *((short*)args[i]);
@@ -471,7 +471,7 @@ int rpcCall(char* name, int* argTypes, void** args){
         } else if (argTypes[i] == long_output || argTypes[i] == long_input){
             long arg = *((long*)args[i]);
             int arg_net = htonl(arg);
-            printf("arg %d\n", arg);
+            printf("arg %ld\n", arg);
             send(sockfd, (char*)&arg_net, 4, 0);
         } else if (argTypes[i] == double_output || argTypes[i] == double_input){
             printf("deal with double");
@@ -499,7 +499,6 @@ int rpcCacheCall(char* name, int* argTypes, void** args){
 int rpcRegister(char* name, int* argTypes, skeleton f){
     // REGISTER server_identifier_len server_identifier port len_name name len_argTypes argTypes 
     int i;
-    char* server_identifier = "some server identifier";
 
     printf("register %d\n", REGISTER);
     int register_net = htonl(REGISTER);
