@@ -220,9 +220,9 @@ void *listenForClient(void * id) {
                         // So run it
 
                         char * functionName = name;
-                        int res;
+                        int res = -1;
 
-                        if (strcmp(functionName, "f0")) {
+                        if (strcmp(functionName, "f0") == 0) {
                             res = f0_Skel(argTypes, args);
                         } else if (strcmp(functionName, "f1") == 0) {
                             res = f1_Skel(argTypes, args);
