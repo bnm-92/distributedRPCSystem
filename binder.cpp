@@ -265,7 +265,7 @@ int main(int argc, char* argv[]) {
                         int len_server_identifier;
                         recv(i, &len_server_identifier_net, 4, 0);
                         len_server_identifier = ntohl(len_server_identifier_net);
-                        printf("len_server_identifier%d\n", len_server_identifier);
+                        printf("len_server_identifier %d\n", len_server_identifier);
 
                         // server_identifier
                         char * server_identifier = (char*)malloc(sizeof(char)*len_server_identifier);
@@ -277,7 +277,7 @@ int main(int argc, char* argv[]) {
                         int server_port;
                         recv(i, &server_port_net, 4, 0);
                         server_port = ntohl(server_port_net);
-                        printf("server_port %d", server_port);
+                        printf("server_port %d\n", server_port);
 
                         // length of name
                         int len_name_net;

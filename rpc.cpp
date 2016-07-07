@@ -198,7 +198,8 @@ int rpcInit(){
     printf("SERVER_ADDRESS %s\n", hostIP);    
     printf("SERVER_ADDRESS_PORT %d\n", htons(port_num));
     
-    SERVER_ADDRESS = hostIP;
+    SERVER_ADDRESS = (char*)malloc(sizeof(hostIP));
+    SERVER_ADDRESS = strncpy(SERVER_ADDRESS, hostIP, sizeof(hostIP));
     PORT = htons(port_num);
 
     freeaddrinfo(ai); // all done with this
@@ -278,6 +279,7 @@ int rpcCall(char* name, int* argTypes, void** args){
     struct hostent *binder_address = gethostbyname(getenv("BINDER_ADDRESS"));
     int sockfd = connectToSocket(binder_port, binder_address); 
     if (sockfd < 0){
+        printf(":(\n");
         return -1;
     }
 
@@ -379,11 +381,49 @@ int rpcCall(char* name, int* argTypes, void** args){
     printf("size of args %d\n", len_args);
     send(sockfd, (char*)&len_args_net, 4, 0);
 
-    for (i=0; i<len_args/4; i++){
-        int arg = *((int *)args[i]);
-        int arg_net = htonl(arg);
-        printf("argTypes %d\n", arg);
-        send(sockfd, (char*)&arg_net, 4, 0);
+    // Define some types
+    int char_output = (1 << ARG_OUTPUT) | (ARG_CHAR << 16);
+    int char_input = (1 << ARG_INPUT) | (ARG_CHAR << 16);
+    int short_output = (1 << ARG_OUTPUT) | (ARG_SHORT << 16);
+    int short_input = (1 << ARG_INPUT) | (ARG_SHORT << 16);
+    int int_output = (1 << ARG_OUTPUT) | (ARG_INT << 16);
+    int int_input = (1 << ARG_INPUT) | (ARG_INT << 16);
+    int long_output = (1 << ARG_OUTPUT) | (ARG_LONG << 16);
+    int long_input = (1 << ARG_INPUT) | (ARG_LONG << 16);
+    int double_output = (1 << ARG_OUTPUT) | (ARG_DOUBLE << 16);
+    int double_input = (1 << ARG_INPUT) | (ARG_DOUBLE << 16);
+    int float_output = (1 << ARG_OUTPUT) | (ARG_FLOAT << 16);
+    int float_input = (1 << ARG_INPUT) | (ARG_FLOAT << 16);
+
+    // Last argType is always 0 so skip that one
+    for (i=0; i<len_argTypes/2 - 1; i++){
+        if (argTypes[i] == char_output || argTypes[i] == char_input){
+            char* arg = *((char**)args[i]);
+            printf("arg %c\n", arg);
+            send(sockfd, arg, 1, 0);
+        } else if (argTypes[i] == short_output || argTypes[i] == short_input){
+            short arg = *((short*)args[i]);
+            short arg_net = htons(arg);
+            printf("arg %d\n", arg);
+            send(sockfd, (char*)&arg_net, 2, 0);
+        } else if (argTypes[i] == int_output || argTypes[i] == int_input){
+            int arg = *((int*)args[i]);
+            int arg_net = htonl(arg);
+            printf("arg %d\n", arg);
+            send(sockfd, (char*)&arg_net, 4, 0);
+        } else if (argTypes[i] == long_output || argTypes[i] == long_input){
+            long arg = *((long*)args[i]);
+            int arg_net = htonl(arg);
+            printf("arg %d\n", arg);
+            send(sockfd, (char*)&arg_net, 4, 0);
+        } else if (argTypes[i] == double_output || argTypes[i] == double_input){
+            printf("deal with double");
+        } else if (argTypes[i] == float_output || argTypes[i] == float_input){
+            printf("deal with float");
+        } else {
+            printf("Error argType undefined %d\n", argTypes[i]);
+            return -1;
+        }
     }
 
     printf("done sending to server\n");
@@ -408,17 +448,16 @@ int rpcRegister(char* name, int* argTypes, skeleton f){
     int register_net = htonl(REGISTER);
     send(sockfdBinder, (char*)&register_net, 4, 0);
 
-    int len_server_identifier = strlen(server_identifier);
+    int len_server_identifier = strlen(SERVER_ADDRESS);
     int len_server_identifier_net = htonl(len_server_identifier);
     printf("size of server_identifier %d\n", len_server_identifier);
     send(sockfdBinder, (char*)&len_server_identifier_net, sizeof(len_server_identifier_net), 0);
 
-    printf("server_identifier %s\n", server_identifier);
-    send(sockfdBinder, name, len_server_identifier, 0);
+    printf("server_identifier %s\n", SERVER_ADDRESS);
+    send(sockfdBinder, SERVER_ADDRESS, len_server_identifier, 0);
 
-    int server_port = 1234;
-    printf("server port %d\n", server_port);
-    int server_port_net = htonl(server_port);
+    printf("server port %d\n", PORT);
+    int server_port_net = htonl(PORT);
     send(sockfdBinder, (char*)&server_port_net, 4, 0);
 
     int len_name = strlen(name);
@@ -469,6 +508,7 @@ int rpcExecute(){
 }
 
 int rpcTerminate(){
+    free(SERVER_ADDRESS);
     return 0;
 }
 
