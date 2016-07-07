@@ -176,7 +176,10 @@ void *listenForClient(void * id) {
                                 printf("arg %ld\n", arg);
                                 args[j] = &arg;
                             } else if (argTypes[j] == double_output || argTypes[j] == double_input){
-                                printf("deal with double");
+                                double arg;
+                                recv(i, &arg, 8, 0);
+                                printf("arg %f\n", arg);
+                                args[j] = &arg;
                             } else if (argTypes[j] == float_output || argTypes[j] == float_input){
                                 float arg;
                                 float arg_net;
@@ -477,7 +480,9 @@ int rpcCall(char* name, int* argTypes, void** args){
             printf("arg %ld\n", arg);
             send(sockfd, (char*)&arg_net, 4, 0);
         } else if (argTypes[i] == double_output || argTypes[i] == double_input){
-            printf("deal with double");
+            double arg = *((double*)args[i]);
+            printf("arg %f\n", arg);
+            send(sockfd, (char*)&arg, 8, 0);
         } else if (argTypes[i] == float_output || argTypes[i] == float_input){
             float arg = *((float*)args[i]);
             float arg_net = htonl(arg);
