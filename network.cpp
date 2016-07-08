@@ -70,11 +70,13 @@ int len_argTypes(int* argTypes){
 }
 
 int is_input(int argType){
-    return (argType & ( 1 << ARG_INPUT )) >> ARG_INPUT == 0;
+    printf("test is_input %d\n", argType);
+    printf("%d\n", (argType & ( 1 << ARG_INPUT )) >> ARG_INPUT);
+    return (argType & ( 1 << ARG_INPUT )) >> ARG_INPUT;
 }
 
 int is_output(int argType){
-    return (argType & ( 1 << ARG_OUTPUT )) >> ARG_OUTPUT == 0;
+    return (argType & ( 1 << ARG_OUTPUT )) >> ARG_OUTPUT;
 }
 
 int get_arg_type(int argType){
