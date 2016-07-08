@@ -107,7 +107,10 @@ void send_args(int sockid, int* argTypes, void** args){
         int type = get_arg_type(argTypes[i]);
         int arg_len = get_arg_length(argTypes[i]);
         send(sockid, args[i], numBytes(type, arg_len), 0);
-        printf("sent arg\n");
+        if (get_arg_input_type(argTypes[i]) == ARG_INPUT){
+            printf("bytes %d\n", numBytes(type, arg_len));
+            printf("sent arg %d\n", *((int *)args[i]));
+        }
     }
 }
 
@@ -150,8 +153,9 @@ void** recv_args(int sockid, int* argTypes){
         }
         int type = get_arg_type(argTypes[i]);
         int arg_len = get_arg_length(argTypes[i]);
+        printf("type %d arg_len %d\n", type, arg_len);
         recv(sockid, &args[i], numBytes(type, arg_len), 0);
-        printf("ryan %d\n", *((int*)args[i]));
+        printf("ryan %d\n", args[i]);
     }
     return args;
 }
