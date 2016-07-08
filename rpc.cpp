@@ -416,6 +416,8 @@ int rpcCall(char* name, int* argTypes, void** args){
     send_string(sockfd, name);
     send_argTypes(sockfd, argTypes);
 
+    send_args(sockfd, argTypes, args);
+
     int len_args = sizeof(args);
     int len_args_net = htonl(len_args);
     printf("size of args %d\n", len_args);

@@ -10,6 +10,9 @@
 #include <errno.h>
 #include <arpa/inet.h>
 
+#define ARG_INPUT   31
+#define ARG_OUTPUT  30
+
 void send_integer(int sockid, int val){
     int net_val = htonl(val);
     send(sockid, (char*)&net_val, 4, 0);
@@ -34,6 +37,24 @@ int len_argTypes(int* argTypes){
     return i + 1;
 }
 
+int get_arg_input_type(int argType){
+    // first bit 1 -> 128, second bit 1 -> 64
+    if (((argType >> 24) & 0xff) == 128){
+        return ARG_INPUT;
+    }
+    return ARG_OUTPUT;
+}
+
+int get_arg_type(int argType){
+    // second byte
+    return (argType >> 16) & 0xff;
+}
+
+int get_arg_length(int argType){
+    // lower two bytes
+    return (((argType >> 8) & 0xff) << 8) | (argType & 0xff);
+}
+
 void send_argTypes(int sockid, int* argTypes){
     int len = len_argTypes(argTypes);
     int len_net = htonl(len);
@@ -46,6 +67,13 @@ void send_argTypes(int sockid, int* argTypes){
         printf("argTypes %d\n", argType);
         send(sockid, (char*)&argType_net, 4, 0);
     }
+}
+
+void send_args(int sockid, int* argTypes, void** args){
+    printf("ArgType %d\n", argTypes[0]);
+    printf("%d\n", get_arg_input_type(argTypes[0]));
+    printf("%d\n", get_arg_type(argTypes[0]));
+    printf("%d\n", get_arg_length(argTypes[0]));
 }
 
 int recv_integer(int sockid){
