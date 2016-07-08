@@ -126,96 +126,12 @@ void *listenForClient(void * id) {
                     printf("code %d\n", code);
 
                     if (code == EXECUTE){
-                        // length of name
-                        int len_name_net;
-                        int len_name;
-                        recv(i, &len_name_net, 4, 0);
-                        len_name = ntohl(len_name_net);
-                        printf("len_name %d\n", len_name);
+                        char* name = recv_string(i);
+                        int* argTypes = recv_argTypes(i);
+                        void **args = recv_args(i, argTypes);
 
-                        // name
-                        char * name = (char*)malloc(sizeof(char)*len_name);
-                        recv(i, name, len_name, 0);
-                        printf("name %s\n", name);
-
-                        // length of argTypes
-                        int len_argTypes_net;
-                        int len_argTypes;
-                        recv(i, &len_argTypes_net, 4, 0);
-                        len_argTypes = ntohl(len_argTypes_net);
-                        printf("len_argTypes %d\n", len_argTypes);
-
-                        int argTypes[len_argTypes/2];
-                        int j;
-                        for (j=0; j<len_argTypes/2; j++){
-                            int argType_net;
-                            recv(i, &argType_net, 4, 0);
-                            argTypes[j] = ntohl(argType_net);
-                            printf("argType %d\n", argTypes[j]);
-                            printf("argType net %d\n", argType_net);
-                        }
-
-                        // length of args
-                        int len_args_net;
-                        int len_args;
-                        recv(i, &len_args_net, 4, 0);
-                        len_args = ntohl(len_args_net);
-                        printf("len_args %d\n", len_args);
-
-                        // stores args of different types
-                        void **args;
-                        args = (void **)malloc((len_argTypes/2 - 1) * sizeof(void *));
-                        printf("size of args %d\n", len_argTypes/2 - 1);
-                        printf("size of void* %lu\n", sizeof(void *));
-                        printf("size of both %lu\n", (len_argTypes/2 - 1) * sizeof(void *));
-                        // Last argType is always 0 so skip that one
-                        for (j=0; j<len_argTypes/2 - 1; j++){
-                            printf("loop %d arg type %d \n", j, argTypes[j]);
-                            if (argTypes[j] == char_output || argTypes[j] == char_input){
-                                char arg;
-                                char arg_net[1];
-                                recv(i, arg_net, 1, 0);
-                                arg = arg_net[0];
-                                printf("arg %c\n", arg);
-                                args[j] = &arg;
-                            } else if (argTypes[j] == short_output || argTypes[j] == short_input){
-                                short arg;
-                                short arg_net;
-                                recv(i, &arg_net, 2, 0);
-                                arg = ntohs(arg_net);
-                                printf("arg %d\n", arg);
-                                args[j] = &arg;
-                            } else if (argTypes[j] == int_output || argTypes[j] == int_input){
-                                printf("test int\n");
-                                int arg;
-                                int arg_net;
-                                recv(i, &arg_net, 4, 0);
-                                arg = ntohl(arg_net);
-                                printf("arg %d\n", arg);
-                                args[j] = (void *)&arg;
-                            } else if (argTypes[j] == long_output || argTypes[j] == long_input){
-                                long arg;
-                                long arg_net;
-                                recv(i, &arg_net, 4, 0);
-                                arg = ntohl(arg_net);
-                                printf("arg %ld\n", arg);
-                                args[j] = &arg;
-                            } else if (argTypes[j] == double_output || argTypes[j] == double_input){
-                                double arg;
-                                recv(i, &arg, 8, 0);
-                                printf("arg %f\n", arg);
-                                args[j] = &arg;
-                            } else if (argTypes[j] == float_output || argTypes[j] == float_input){
-                                float arg;
-                                float arg_net;
-                                recv(i, &arg_net, 4, 0);
-                                arg = ntohl(arg_net);
-                                printf("arg %f\n", arg);
-                                args[j] = &arg;
-                            } else {
-                                printf("Error argType undefined %d\n", argTypes[j]);
-                            }
-                        }
+                        //free(argTypes);
+                        //free(args);
 
                         // Now we have all the info we need to run the function
                         // So run it
@@ -399,6 +315,9 @@ int rpcCall(char* name, int* argTypes, void** args){
 
     int server_port = recv_integer(sockfd);
     char* server_addr = recv_string(sockfd);
+
+    printf("server_port\n", server_port);
+    printf("server addr\n", server_addr);
 
     close(sockfd);
     printf("done receiving from binder\n");
