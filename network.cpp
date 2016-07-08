@@ -147,7 +147,7 @@ void send_args(int sockid, int* argTypes, void** args){
     for (int i=0; i<len_at-1; i++){
         int type = get_arg_type(argTypes[i]);
         int arg_len = get_arg_length(argTypes[i]);
-        send(sockid, &args[i], numBytes(type, arg_len), 0);
+        send(sockid, args[i], numBytes(type, arg_len), 0);
         printf("sent arg\n");
     }
 }
