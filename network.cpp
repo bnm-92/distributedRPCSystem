@@ -37,8 +37,8 @@ int numBytes(int type, int arrLen) {
         size = sizeof(float);
     }
 
-    if (arrlen > 0) {
-        size = size * arrlen;
+    if (arrLen > 0) {
+        size = size * arrLen;
     }
 
     return size;
@@ -147,11 +147,7 @@ void send_args(int sockid, int* argTypes, void** args){
     for (int i=0; i<len_at-1; i++){
         int type = get_arg_type(argTypes[i]);
         int arg_len = get_arg_length(argTypes[i]);
-        if (arg_len == 0){
-            printf("%d\n", *((int*)args[i]));
-        } else {
-            printf("%d\n", *((int*)args[i]));
-        }
+        send(sockid, (void*)args[i], numBytes(type, arg_len), 0);
     }
 }
 
