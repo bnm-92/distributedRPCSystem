@@ -185,6 +185,8 @@ void *listenForClient(void * id) {
                         if (skel) {
                         	res = skel(argTypes, args);	
                         }
+                        printf("result is: %d\n", res);
+                        printf("%d\n", *((int*)args));
                         
                         free(name);
                     }
@@ -197,7 +199,7 @@ void *listenForClient(void * id) {
 
 int rpcInit(){
     // this will create a socket for the client and listen to it on a thread
-
+    printf("\nRPC INIT\n");
     char* buf;
     int nbytes;
     // char remoteIP[INET6_ADDRSTRLEN];
@@ -304,6 +306,7 @@ int rpcInit(){
     //     //do some work
     // }
     freeaddrinfo(servinfoB);
+    printf("\nRPC INIT END\n");
     return 0;
 }
 
@@ -325,6 +328,7 @@ int connectToSocket(int port, hostent* server){
 }
 
 int rpcCall(char* name, int* argTypes, void** args){
+    printf("\nRPC CALL\n");
     printf("START CONNECT TO BINDER\n");
     // Connect to binder
     int binder_port = atoi(getenv("BINDER_PORT"));
@@ -341,7 +345,8 @@ int rpcCall(char* name, int* argTypes, void** args){
     send_integer(sockfd, LOC_REQUEST);
     send_string(sockfd, name);
     send_argTypes(sockfd, argTypes);
-    printf("done sending to binder\n");
+    
+    printf("\ndone sending to binder\n");
 
     int code = recv_integer(sockfd);
     if (code != LOC_SUCCESS){
@@ -352,6 +357,7 @@ int rpcCall(char* name, int* argTypes, void** args){
     char* server_addr = recv_string(sockfd);
 
     close(sockfd);
+    
     printf("done receiving from binder\n");
 
     printf("START CONNECT TO SERVER\n");
@@ -372,9 +378,10 @@ int rpcCall(char* name, int* argTypes, void** args){
     printf("done sending to server\n");
 
     // Receive from server
-    printf("done receiving from binder");
+    printf("done receiving from binder\n");
 
     free(server_addr);
+    printf("\nRPC CALL END\n");
     return 0;
 }
 
