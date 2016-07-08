@@ -70,17 +70,11 @@ int len_argTypes(int* argTypes){
 }
 
 int is_input(int argType){
-    if (argType & ( 1 << ARG_INPUT )) {
-        return 1;
-    }
-    return 0;
+    return (argType & ( 1 << ARG_INPUT )) >> ARG_INPUT == 0;
 }
 
 int is_output(int argType){
-    if (argType & ( 1 << ARG_OUTPUT )) {
-        return 1;
-    }
-    return 0;
+    return (argType & ( 1 << ARG_OUTPUT )) >> ARG_OUTPUT == 0;
 }
 
 int get_arg_type(int argType){
@@ -154,7 +148,7 @@ void** recv_args(int sockid, int* argTypes){
     int num_args = len_argTypes(argTypes) - 1;
     void** args = (void **)malloc(num_args * sizeof(void *));
     for (int i=0; i<num_args; i++){
-        if (is_output(argTypes[i])){
+        if (is_input(argTypes[i])){
             continue;
         }
         int type = get_arg_type(argTypes[i]);
