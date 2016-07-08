@@ -69,12 +69,14 @@ int len_argTypes(int* argTypes){
     return i + 1;
 }
 
-int get_arg_input_type(int argType){
-    // first bit 1 -> 128, second bit 1 -> 64
-    if (((argType >> 24) & 0xff) == 128){
-        return ARG_INPUT;
-    }
-    return ARG_OUTPUT;
+int is_input(int argType){
+    printf("test is_input %d\n", argType);
+    printf("%d\n", (argType & ( 1 << ARG_INPUT )) >> ARG_INPUT);
+    return (argType & ( 1 << ARG_INPUT )) >> ARG_INPUT;
+}
+
+int is_output(int argType){
+    return (argType & ( 1 << ARG_OUTPUT )) >> ARG_OUTPUT;
 }
 
 int get_arg_type(int argType){
@@ -107,7 +109,7 @@ void send_args(int sockid, int* argTypes, void** args){
         int type = get_arg_type(argTypes[i]);
         int arg_len = get_arg_length(argTypes[i]);
         send(sockid, args[i], numBytes(type, arg_len), 0);
-        if (get_arg_input_type(argTypes[i]) == ARG_INPUT){
+        if (is_input(argTypes[i])){
             printf("bytes %d\n", numBytes(type, arg_len));
             printf("sent arg %d\n", *((int *)args[i]));
         }
@@ -148,7 +150,7 @@ void** recv_args(int sockid, int* argTypes){
     int num_args = len_argTypes(argTypes) - 1;
     void** args = (void **)malloc(num_args * sizeof(void *));
     for (int i=0; i<num_args; i++){
-        if (get_arg_input_type(argTypes[i]) == ARG_OUTPUT){
+        if (is_input(argTypes[i])){
             continue;
         }
         int type = get_arg_type(argTypes[i]);
