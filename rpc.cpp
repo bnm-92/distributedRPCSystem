@@ -14,6 +14,8 @@
 #include <arpa/inet.h>
 #include <pthread.h>
 #include <vector>
+#include <tr1/unordered_map>
+
 
 using namespace std;
 
@@ -63,6 +65,47 @@ int getargTypesLength(int* argTypes) {
 	}
 
 	return n;
+}
+
+struct functionPair {
+	char* name;
+	int* argTypes;
+};
+
+struct functionMap {
+	struct functionPair pair;
+	skeleton skel;
+};
+
+std::vector<functionMap> functions;
+
+bool checkFunction2(char* name, int* argTypes, functionPair pair) {
+	if (strcmp(name, pair.name) == 0) {
+		if (len_argTypes(argTypes) == len_argTypes(pair.argTypes)) {
+			for (int i=0; i<len_argTypes(argTypes); i++) {
+				// just check 
+				if (
+					(get_arg_input_type(argTypes[i]) == get_arg_input_type(pair.argTypes[i])) && 
+					(get_arg_type(argTypes[i]) == get_arg_type(pair.argTypes[i])) && 
+					( (get_arg_length(argTypes[i]) > 0) == (get_arg_length(pair.argTypes[i]) > 0))
+					) {
+					return true;
+				}
+			}	
+		}
+	}
+	return false;
+}
+
+skeleton checkFunction(char* name, int* argTypes) {
+	skeleton skel = NULL;
+	for (int i=0; i<functions.size(); i++) {
+		if (checkFunction2(name, argTypes, functions[i].pair)) {
+			skel = functions[i].skel;
+			break;
+		}
+	}
+	return skel;
 }
 
 void *listenForClient(void * id) {
@@ -221,18 +264,10 @@ void *listenForClient(void * id) {
                         // So run it
 
                         char * functionName = name;
-                        int res = -1;
-
-                        if (strcmp(functionName, "f0") == 0) {
-                            res = f0_Skel(argTypes, args);
-                        } else if (strcmp(functionName, "f1") == 0) {
-                            res = f1_Skel(argTypes, args);
-                        } else if (strcmp(functionName, "f2") == 0) {
-                            res = f2_Skel(argTypes, args);
-                        } else if (strcmp(functionName, "f3") == 0) {
-                            res = f3_Skel(argTypes, args);
-                        } else if (strcmp(functionName, "f4") == 0){
-                            res = f4_Skel(argTypes, args);
+                        skeleton skel = checkFunction(name, argTypes);
+                        int res = 0;
+                        if (skel) {
+                        	res = skel(argTypes, args);	
                         }
                         
                         free(name);
@@ -492,6 +527,16 @@ int rpcRegister(char* name, int* argTypes, skeleton f){
 
     if (code == REGISTER_FAILURE){
         return error;
+    } else {
+    	//register was successful so lets add it to map
+    	struct functionPair pair;
+    	pair.name = name;
+    	pair.argTypes = argTypes;
+    	struct functionMap map;
+    	map.pair = pair;
+    	map.skel = f;
+    	functions.push_back(map);
+    	
     }
     return 0;
 }

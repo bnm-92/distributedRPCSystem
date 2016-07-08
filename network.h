@@ -13,3 +13,9 @@ int* recv_argTypes(int sockid);
 int len_argTypes(int* argTypes);
 
 void send_args(int sockid, int* argTypes, void** args);
+
+int get_arg_input_type(int argType);
+
+int get_arg_type(int argType);
+
+int get_arg_length(int argType);
