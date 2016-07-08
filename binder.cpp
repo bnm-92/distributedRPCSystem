@@ -28,6 +28,7 @@ struct serverFunction {
 	int sockfd;
     char* address;
     int localfd;
+    int numArgs;
 };
 
 struct database {
@@ -205,29 +206,31 @@ int main(int argc, char* argv[]) {
                         recv(i, name, len_name, 0);
                         printf("name %s\n", name);
 
-                        // length of argTypes
-                        int len_argTypes_net;
-                        int len_argTypes;
-                        recv(i, &len_argTypes_net, 4, 0);
-                        len_argTypes = ntohl(len_argTypes_net);
-                        printf("len_argTypes %d\n", len_argTypes);
+                        // // length of argTypes
+                        // int len_argTypes_net;
+                        // int len;
+                        // recv(i, &len_argTypes_net, 4, 0);
+                        // len = ntohl(len_argTypes_net);
+                        // printf("len_argTypes %d\n", len);
 
-                        int argTypes[len_argTypes/2];
-                        int j;
-                        for (j=0; j<len_argTypes/2; j++){
-                            int argType_net;
-                            recv(i, &argType_net, 2, 0);
-                            argTypes[i] = ntohl(argType_net);
-                            printf("argType %d\n", argTypes[i]);
-                        }
+                        // int argTypes[len];
+                        // int j;
+                        // for (j=0; j<len; j++){
+                        //     int argType_net;
+                        //     recv(i, &argType_net, 4, 0);
+                        //     argTypes[i] = ntohl(argType_net);
+                        //     printf("argType %d\n", argTypes[i]);
+                        // }
+                        int* argTypes = recv_argTypes(i);
+                        int len = len_argTypes(argTypes);
 
                         // Determine which server info to return
                         serverFunction s;
                         bool found_server = false;
                         for(std::vector<serverFunction>::size_type i = 0; i != db.functions.size(); i++) {
-                            if (strcmp(db.functions[i].name,name) == 0 && len_argTypes == sizeof(db.functions[i].argTypes)){
+                            if (strcmp(db.functions[i].name,name) == 0 && len == db.functions[i].numArgs){
                                 bool same = true;
-                                for (j=0;j<sizeof(argTypes)/2; j++){
+                                for (int j=0;j<len; j++){
                                     if (argTypes[j] != db.functions[i].argTypes[j]){
                                         same = false;
                                     }
@@ -272,10 +275,20 @@ int main(int argc, char* argv[]) {
                         char* server_identifier = recv_string(i);
                         int server_port = recv_integer(i);
                         char* name = recv_string(i);
-                        int* argTypes = recv_argTypes(i);
+
+                        // int size_argTypes = recv_integer(i);
+                        // int argTypes[size_argTypes/2];
+                        // for (int j=0; j<size_argTypes/2; j++){
+                        //     int argType_net;
+                        //     recv(i, &argType_net, 2, 0);
+                        //     argTypes[j] = ntohl(argType_net);
+                        //     printf("argType %d\n", argTypes[j]);
+                        // }
+                        int *argTypes = recv_argTypes(i);
+                        int len = len_argTypes(argTypes);
 
                         // Register server info to database
-                        serverFunction server_function = {name, argTypes, server_port, server_identifier, i};
+                        serverFunction server_function = {name, argTypes, server_port, server_identifier, i, len};
                         db.functions.push_back(server_function);
                         printf("Added function %s at port %d to db\n", server_function.name, server_function.sockfd);
 
@@ -286,8 +299,9 @@ int main(int argc, char* argv[]) {
                         int error = 0;
                         send_integer(i, error);
                         
-                        free(name);
-                        free(argTypes);
+                        // Need to free these when server disconnects
+                        //free(name);
+                        //free(argTypes);
 
                     }
                 } // END handle data from client

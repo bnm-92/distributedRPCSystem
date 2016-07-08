@@ -9,3 +9,5 @@ int recv_integer(int sockid);
 char* recv_string(int sockid);
 
 int* recv_argTypes(int sockid);
+
+int len_argTypes(int* argTypes);

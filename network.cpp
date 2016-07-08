@@ -26,17 +26,25 @@ void send_string(int sockid, char* val){
     printf("sent %s to %d\n", val, sockid);
 }
 
-void send_argTypes(int sockid, int* argTypes){
-    int len_argTypes = sizeof(argTypes);
-    int len_argTypes_net = htonl(len_argTypes);
-    send(sockid, (char*)&len_argTypes_net, 4, 0);
-    printf("sent %d to %d\n", len_argTypes, sockid);
+int len_argTypes(int* argTypes){
+    int i = 0;
+    while(argTypes[i] != 0){
+        i++;
+    }
+    return i + 1;
+}
 
-    for (int i=0; i<len_argTypes/2; i++){
+void send_argTypes(int sockid, int* argTypes){
+    int len = len_argTypes(argTypes);
+    int len_net = htonl(len);
+    send(sockid, (char*)&len_net, 4, 0);
+    printf("sent %d to %d\n", len, sockid);
+
+    for (int i=0; i<len; i++){
         int argType = argTypes[i];
         int argType_net = htonl(argType);
         printf("argTypes %d\n", argType);
-        send(sockid, (char*)&argType_net, 2, 0);
+        send(sockid, (char*)&argType_net, 4, 0);
     }
 }
 
@@ -59,10 +67,12 @@ char* recv_string(int sockid){
 
 int* recv_argTypes(int sockid){
     int size_argTypes = recv_integer(sockid);
-    int * argTypes = (int*)malloc(size_argTypes);
-    for (int i=0; i<size_argTypes/2; i++){
+    printf("argType len %d\n", size_argTypes);
+    int * argTypes = (int*)malloc(size_argTypes*sizeof(int));
+    for (int i=0; i<size_argTypes; i++){
+        printf("looped\n");
         int argType_net;
-        recv(sockid, &argType_net, 2, 0);
+        recv(sockid, &argType_net, 4, 0);
         argTypes[i] = ntohl(argType_net);
         printf("argType %d\n", argTypes[i]);
     }     

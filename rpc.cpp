@@ -399,16 +399,16 @@ int rpcCall(char* name, int* argTypes, void** args){
     printf("name %s\n", name);
     send(sockfd, name, len_name, 0);
 
-    int len_argTypes = sizeof(argTypes);
-    int len_argTypes_net = htonl(len_argTypes);
-    printf("size of argTypes %d\n", len_argTypes);
+    int len = len_argTypes(argTypes);
+    int len_argTypes_net = htonl(len);
+    printf("size of argTypes %d\n", len);
     send(sockfd, (char*)&len_argTypes_net, 4, 0);
 
-    for (i=0; i<len_argTypes/2; i++){
+    for (i=0; i<len; i++){
         int argType = argTypes[i];
         int argType_net = htonl(argType);
         printf("argTypes %d\n", argType);
-        send(sockfd, (char*)&argType_net, 2, 0);
+        send(sockfd, (char*)&argType_net, 4, 0);
     }
 
     printf("done sending to binder\n");
@@ -470,7 +470,7 @@ int rpcCall(char* name, int* argTypes, void** args){
     printf("size of argTypes %d\n", len_argTypes);
     send(sockfd, (char*)&len_argTypes_net, 4, 0);
 
-    for (i=0; i<len_argTypes/2; i++){
+    for (i=0; i<len/2; i++){
         int argType = argTypes[i];
         int argType_net = htonl(argType);
         printf("argTypes %d\n", argType);
@@ -484,7 +484,7 @@ int rpcCall(char* name, int* argTypes, void** args){
     send(sockfd, (char*)&len_args_net, 4, 0);
 
     // Last argType is always 0 so skip that one
-    for (i=0; i<len_argTypes/2 - 1; i++){
+    for (i=0; i<len; i++){
         if (argTypes[i] == char_output || argTypes[i] == char_input){
             char* arg = *((char**)args[i]);
             printf("arg %s\n", arg);
@@ -535,6 +535,8 @@ int rpcCacheCall(char* name, int* argTypes, void** args){
 int rpcRegister(char* name, int* argTypes, skeleton f){
     // REGISTER server_identifier_len server_identifier port len_name name len_argTypes argTypes 
     printf("sending server info to binder\n");
+    int len = len_argTypes(argTypes);
+    printf("Size of argTypes %d", len);
     send_integer(sockfdBinder, REGISTER);
     send_string(sockfdBinder, SERVER_ADDRESS);
     send_integer(sockfdBinder, PORT);
