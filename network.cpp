@@ -20,6 +20,30 @@
 #define ARG_INPUT   31
 #define ARG_OUTPUT  30
 
+
+int numBytes(int type, int arrLen) {
+    int size = 0;
+    if (type == 1) {
+        size = sizeof(char);
+    } else if (type == 2) {
+        size = sizeof(short);
+    } else if (type == 3) {
+        size = sizeof(int);
+    } else if (type == 4) {
+        size = sizeof(long);
+    } else if (type == 5) {
+        size = sizeof(double);
+    } else if (type == 6) {
+        size = sizeof(float);
+    }
+
+    if (arrlen > 0) {
+        size = size * arrlen;
+    }
+
+    return size;
+}
+
 void send_integer(int sockid, int val){
     int net_val = htonl(val);
     send(sockid, (char*)&net_val, 4, 0);
