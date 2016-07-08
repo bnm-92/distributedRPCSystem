@@ -14,8 +14,6 @@
 #include <arpa/inet.h>
 #include <pthread.h>
 #include <vector>
-#include <tr1/unordered_map>
-
 
 using namespace std;
 
