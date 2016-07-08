@@ -244,27 +244,17 @@ int main(int argc, char* argv[]) {
                             }
                         }
                         if (!found_server){
-                            printf("loc_failure %d\n", LOC_FAILURE);
-                            int loc_failure_net = htonl(LOC_FAILURE);
-                            send(i, (char*)&loc_failure_net, 4, 0);
+                            send_integer(i, LOC_FAILURE);
                         } else {
-                            printf("loc_success %d\n", LOC_SUCCESS);
-                            int loc_success_net = htonl(LOC_SUCCESS);
-                            send(i, (char*)&loc_success_net, 4, 0);
+                            send_integer(i, LOC_SUCCESS);
 
-                            int server_port = s.sockfd;
-                            int server_port_net = htonl(server_port);
-                            printf("server port %d\n", server_port);
-                            send(i, (char*)&server_port_net, 4, 0);
+                            printf("TEST\n");
+                            printf("s.sockfd %d\n",s.sockfd);
+                            send_integer(i, s.sockfd);
 
-                            char* server_addr = s.address;
-                            
-                            int len_server_addr = strlen(server_addr);
-                            int len_server_addr_net = htonl(len_server_addr);
-                            printf("size of server_addr %d\n", len_server_addr);
-                            send(i, (char*)&len_server_addr_net, sizeof(len_server_addr_net), 0);
-
-                            send(i, server_addr, len_server_addr, 0);
+                            printf("s.address %s\n",s.address);
+                            printf("len %d\n", strlen(s.address));
+                            send_string(i, s.address);
                         }
 
 

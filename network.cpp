@@ -27,7 +27,8 @@ void send_integer(int sockid, int val){
 }
 
 void send_string(int sockid, char* val){
-    int len = strlen(val);
+    // For null terminator
+    int len = strlen(val) + 1;
     int len_net = htonl(len);
     send(sockid, (char*)&len_net, 4, 0);
     printf("sent %d to %d\n", len, sockid);
@@ -119,14 +120,13 @@ void send_arg(int sockid, int type, int len, void** val){
 
 void send_args(int sockid, int* argTypes, void** args){
     int len_at = len_argTypes(argTypes);
-    // len_argTypes = len_args + 1
     for (int i=0; i<len_at-1; i++){
         int type = get_arg_type(argTypes[i]);
         int arg_len = get_arg_length(argTypes[i]);
         if (arg_len == 0){
-            send_single_arg(sockid, type, args[i]);
+            printf("%d\n", *((int*)args[i]));
         } else {
-            send_arg(sockid, type, get_arg_length(argTypes[i]), &args[i]);
+            printf("%d\n", *((int*)args[i]));
         }
     }
 }

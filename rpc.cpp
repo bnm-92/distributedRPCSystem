@@ -216,7 +216,7 @@ int rpcInit(){
     printf("SERVER_ADDRESS_PORT %d\n", htons(port_num));
     
     SERVER_ADDRESS = (char*)malloc(sizeof(hostIP));
-    SERVER_ADDRESS = strncpy(SERVER_ADDRESS, hostIP, sizeof(hostIP));
+    strncpy(SERVER_ADDRESS, hostIP, sizeof(hostIP));
     PORT = htons(port_num);
 
     freeaddrinfo(ai); // all done with this
