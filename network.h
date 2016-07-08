@@ -14,9 +14,7 @@ int len_argTypes(int* argTypes);
 
 void send_args(int sockid, int* argTypes, void** args);
 
-int is_input(int argType);
-
-int is_output(int argType);
+int get_arg_input_type(int argType);
 
 int get_arg_type(int argType);
 

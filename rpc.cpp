@@ -83,8 +83,7 @@ bool checkFunction2(char* name, int* argTypes, functionPair pair) {
 			for (int i=0; i<len_argTypes(argTypes); i++) {
 				// just check 
 				if (
-					(is_input(argTypes[i]) == is_input(pair.argTypes[i])) &&
-                    (is_output(argTypes[i]) == is_output(pair.argTypes[i])) && 
+					(get_arg_input_type(argTypes[i]) == get_arg_input_type(pair.argTypes[i])) && 
 					(get_arg_type(argTypes[i]) == get_arg_type(pair.argTypes[i])) && 
 					( (get_arg_length(argTypes[i]) > 0) == (get_arg_length(pair.argTypes[i]) > 0))
 					) {
