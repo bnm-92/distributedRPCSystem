@@ -207,9 +207,14 @@ void* recv_single_arg(int sockid, int type){
     }
 }
 
-// void** receive_arg(int sockid, int type){
-    
-// }
+void** recv_arg(int sockid, int type, int len){
+    void** vals = (void **)malloc(len * sizeof(void *));
+    for (int i=0; i<len; i++){
+        vals[i] = recv_single_arg(sockid, type);
+        printf("%d\n", vals[i]);
+    }
+    return vals;
+}
 
 void** recv_args(int sockid, int* argTypes){
     int num_args = len_argTypes(argTypes) - 1;
@@ -220,9 +225,9 @@ void** recv_args(int sockid, int* argTypes){
         if (arg_len == 0){
             args[i] = recv_single_arg(sockid, type);
         }
-        //else {
-        //     recv_arg(sockid, type, len_at, &args[i]);
-        // }        
+        else {
+            args[i] = recv_arg(sockid, type, get_arg_length(argTypes[i]));
+        }        
     }
     return args;
 }
