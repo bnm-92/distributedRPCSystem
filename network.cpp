@@ -10,6 +10,13 @@
 #include <errno.h>
 #include <arpa/inet.h>
 
+#define ARG_CHAR    1
+#define ARG_SHORT   2
+#define ARG_INT     3
+#define ARG_LONG    4
+#define ARG_DOUBLE  5
+#define ARG_FLOAT   6
+
 #define ARG_INPUT   31
 #define ARG_OUTPUT  30
 
@@ -69,11 +76,60 @@ void send_argTypes(int sockid, int* argTypes){
     }
 }
 
+void send_single_arg(int sockid, int type, void* val){
+    if (type == ARG_CHAR){
+        char* arg = *((char**)val);
+        printf("arg %s\n", arg);
+        send(sockid, arg, 1, 0);
+    } else if (type == ARG_SHORT){
+        short arg = *((short*)val);
+        short arg_net = htons(arg);
+        printf("arg %d\n", arg);
+        send(sockid, (char*)&arg_net, 2, 0);
+    } else if (type == ARG_INT){
+        int arg = *((int*)val);
+        int arg_net = htonl(arg);
+        printf("arg %d\n", arg);
+        send(sockid, (char*)&arg_net, 4, 0);
+    } else if (type == ARG_LONG){
+        long arg = *((long*)val);
+        int arg_net = htonl(arg);
+        printf("arg %ld\n", arg);
+        send(sockid, (char*)&arg_net, 4, 0);
+    } else if (type == ARG_DOUBLE){
+        double arg = *((double*)val);
+        printf("arg %f\n", arg);
+        send(sockid, (char*)&arg, 8, 0);
+    } else if (type == ARG_FLOAT){
+        float arg = *((float*)val);
+        float arg_net = htonl(arg);
+        printf("arg %f\n", arg);
+        send(sockid, (char*)&arg_net, 4, 0);
+    } else {
+        printf("Error argType undefined %d\n", type);
+    }
+}
+
+void send_arg(int sockid, int type, int len, void** val){
+    for (int i=0; i<len; i++){
+        printf("%d\n", val[i]);
+        send_single_arg(sockid, type, *((void**)val[i]));
+    }
+}
+
 void send_args(int sockid, int* argTypes, void** args){
-    printf("ArgType %d\n", argTypes[0]);
-    printf("%d\n", get_arg_input_type(argTypes[0]));
-    printf("%d\n", get_arg_type(argTypes[0]));
-    printf("%d\n", get_arg_length(argTypes[0]));
+    send_integer(sockid, sizeof(args));
+    int len_at = len_argTypes(argTypes);
+    // len_argTypes = len_args + 1
+    for (int i=0; i<len_at-1; i++){
+        int type = get_arg_type(argTypes[i]);
+        int arg_len = get_arg_length(argTypes[i]);
+        if (arg_len == 0){
+            send_single_arg(sockid, type, args[i]);
+        } else {
+            send_arg(sockid, type, len_at, &args[i]);
+        }
+    }
 }
 
 int recv_integer(int sockid){

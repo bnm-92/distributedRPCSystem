@@ -415,54 +415,11 @@ int rpcCall(char* name, int* argTypes, void** args){
     send_integer(sockfd, EXECUTE);
     send_string(sockfd, name);
     send_argTypes(sockfd, argTypes);
-
     send_args(sockfd, argTypes, args);
-
-    int len_args = sizeof(args);
-    int len_args_net = htonl(len_args);
-    printf("size of args %d\n", len_args);
-    send(sockfd, (char*)&len_args_net, 4, 0);
-
-    // Last argType is always 0 so skip that one
-    for (i=0; i<len_args; i++){
-        if (argTypes[i] == char_output || argTypes[i] == char_input){
-            char* arg = *((char**)args[i]);
-            printf("arg %s\n", arg);
-            send(sockfd, arg, 1, 0);
-        } else if (argTypes[i] == short_output || argTypes[i] == short_input){
-            short arg = *((short*)args[i]);
-            short arg_net = htons(arg);
-            printf("arg %d\n", arg);
-            send(sockfd, (char*)&arg_net, 2, 0);
-        } else if (argTypes[i] == int_output || argTypes[i] == int_input){
-            int arg = *((int*)args[i]);
-            int arg_net = htonl(arg);
-            printf("arg %d\n", arg);
-            send(sockfd, (char*)&arg_net, 4, 0);
-        } else if (argTypes[i] == long_output || argTypes[i] == long_input){
-            long arg = *((long*)args[i]);
-            int arg_net = htonl(arg);
-            printf("arg %ld\n", arg);
-            send(sockfd, (char*)&arg_net, 4, 0);
-        } else if (argTypes[i] == double_output || argTypes[i] == double_input){
-            double arg = *((double*)args[i]);
-            printf("arg %f\n", arg);
-            send(sockfd, (char*)&arg, 8, 0);
-        } else if (argTypes[i] == float_output || argTypes[i] == float_input){
-            float arg = *((float*)args[i]);
-            float arg_net = htonl(arg);
-            printf("arg %f\n", arg);
-            send(sockfd, (char*)&arg_net, 4, 0);
-        } else {
-            printf("Error argType undefined %d\n", argTypes[i]);
-            return -1;
-        }
-    }
-
     printf("done sending to server\n");
 
     // Receive from server
-    printf("done receiving from binder");
+    printf("done receiving from server");
 
     free(server_addr);
     return 0;
