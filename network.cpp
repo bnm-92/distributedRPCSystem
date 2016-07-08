@@ -126,7 +126,7 @@ void send_args(int sockid, int* argTypes, void** args){
         if (arg_len == 0){
             send_single_arg(sockid, type, args[i]);
         } else {
-            send_arg(sockid, type, len_at, &args[i]);
+            send_arg(sockid, type, get_arg_length(argTypes[i]), &args[i]);
         }
     }
 }
