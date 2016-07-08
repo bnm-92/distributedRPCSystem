@@ -70,7 +70,6 @@ int* recv_argTypes(int sockid){
     printf("argType len %d\n", size_argTypes);
     int * argTypes = (int*)malloc(size_argTypes*sizeof(int));
     for (int i=0; i<size_argTypes; i++){
-        printf("looped\n");
         int argType_net;
         recv(sockid, &argType_net, 4, 0);
         argTypes[i] = ntohl(argType_net);

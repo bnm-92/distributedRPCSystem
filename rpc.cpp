@@ -387,62 +387,18 @@ int rpcCall(char* name, int* argTypes, void** args){
     // request_msg format: LOC_REQUEST len_name name len_argTypes argTypes  
     int i;
 
-    printf("loc_request %d\n", LOC_REQUEST);
-    int loc_request_net = htonl(LOC_REQUEST);
-    send(sockfd, (char*)&loc_request_net, 4, 0);
-
-    int len_name = strlen(name);
-    int len_name_net = htonl(len_name);
-    printf("size of name %d\n", len_name);
-    send(sockfd, (char*)&len_name_net, sizeof(len_name_net), 0);
-
-    printf("name %s\n", name);
-    send(sockfd, name, len_name, 0);
-
-    int len = len_argTypes(argTypes);
-    int len_argTypes_net = htonl(len);
-    printf("size of argTypes %d\n", len);
-    send(sockfd, (char*)&len_argTypes_net, 4, 0);
-
-    for (i=0; i<len; i++){
-        int argType = argTypes[i];
-        int argType_net = htonl(argType);
-        printf("argTypes %d\n", argType);
-        send(sockfd, (char*)&argType_net, 4, 0);
-    }
-
+    send_integer(sockfd, LOC_REQUEST);
+    send_string(sockfd, name);
+    send_argTypes(sockfd, argTypes);
     printf("done sending to binder\n");
 
-    int code;
-    int code_net;
-
-    // Get code
-    if (recv(sockfd, &code_net, 4, 0) <= 0){
-        return -1;
-    }
-    code = ntohl(code_net);
-    printf("code %d\n", code);
+    int code = recv_integer(sockfd);
     if (code != LOC_SUCCESS){
         return -1;
     }
-    // Get server port
-    int server_port_net;
-    int server_port;
-    recv(sockfd, &server_port_net, 4, 0);
-    server_port = ntohl(server_port_net);
-    printf("server_port %d\n", server_port);
 
-    //Get server address length
-    int len_server_addr_net;
-    int len_server_addr;
-    recv(sockfd, &len_server_addr_net, 4, 0);
-    len_server_addr = ntohl(len_server_addr_net);
-    printf("len_server_addr %d\n", len_server_addr);
-
-    // Get server address
-    char * server_addr = (char*)malloc(sizeof(char)*len_server_addr);
-    recv(sockfd, server_addr, len_server_addr, 0);
-    printf("server_addr %s\n", server_addr);
+    int server_port = recv_integer(sockfd);
+    char* server_addr = recv_string(sockfd);
 
     close(sockfd);
     printf("done receiving from binder\n");
@@ -456,27 +412,9 @@ int rpcCall(char* name, int* argTypes, void** args){
     }
 
     // request_msg format: EXECUTE len_name name len_argTypes argTypes len_args args
-
-    printf("execute %d\n", EXECUTE);
-    int execute_net = htonl(EXECUTE);
-    send(sockfd, (char*)&execute_net, 4, 0);
-
-    printf("size of name %d\n", len_name);
-    send(sockfd, (char*)&len_name_net, sizeof(len_name_net), 0);
-
-    printf("name %s\n", name);
-    send(sockfd, name, len_name, 0);
-
-    printf("size of argTypes %d\n", len_argTypes);
-    send(sockfd, (char*)&len_argTypes_net, 4, 0);
-
-    for (i=0; i<len/2; i++){
-        int argType = argTypes[i];
-        int argType_net = htonl(argType);
-        printf("argTypes %d\n", argType);
-        printf("argTypes net %d\n", argType_net);
-        send(sockfd, (char*)&argType_net, 4, 0);
-    }
+    send_integer(sockfd, EXECUTE);
+    send_string(sockfd, name);
+    send_argTypes(sockfd, argTypes);
 
     int len_args = sizeof(args);
     int len_args_net = htonl(len_args);
@@ -484,7 +422,7 @@ int rpcCall(char* name, int* argTypes, void** args){
     send(sockfd, (char*)&len_args_net, 4, 0);
 
     // Last argType is always 0 so skip that one
-    for (i=0; i<len; i++){
+    for (i=0; i<len_args; i++){
         if (argTypes[i] == char_output || argTypes[i] == char_input){
             char* arg = *((char**)args[i]);
             printf("arg %s\n", arg);
