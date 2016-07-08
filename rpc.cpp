@@ -169,8 +169,11 @@ void *listenForClient(void * id) {
                     if (code == EXECUTE){
                         char* name =  recv_string(i);
                         int* argTypes = recv_argTypes(i);
+                        printf("test 0\n");
                         void** args = recv_args(i, argTypes);
 
+                        printf("test 1\n");
+                        printf("ryan %d\n", *((int*)args[1]));
 
                         // Now we have all the info we need to run the function
                         // So run it

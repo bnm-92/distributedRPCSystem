@@ -151,6 +151,7 @@ void** recv_args(int sockid, int* argTypes){
         int type = get_arg_type(argTypes[i]);
         int arg_len = get_arg_length(argTypes[i]);
         recv(sockid, &args[i], numBytes(type, arg_len), 0);
+        printf("ryan %d\n", *((int*)args[i]));
     }
     return args;
 }
