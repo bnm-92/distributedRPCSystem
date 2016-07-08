@@ -154,7 +154,9 @@ void** recv_args(int sockid, int* argTypes){
         int type = get_arg_type(argTypes[i]);
         int arg_len = get_arg_length(argTypes[i]);
         printf("type %d arg_len %d\n", type, arg_len);
-        recv(sockid, &args[i], numBytes(type, arg_len), 0);
+        void* buf = (void*)malloc(numBytes(type, arg_len));
+        recv(sockid, &buf, numBytes(type, arg_len), 0);
+        args[i] = buf;
         printf("ryan %d\n", args[i]);
     }
     return args;

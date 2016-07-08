@@ -174,6 +174,7 @@ void *listenForClient(void * id) {
 
                         printf("test 1\n");
                         printf("ryan %d\n", args[1]);
+                        printf("test 2\n");
 
                         // Now we have all the info we need to run the function
                         // So run it
