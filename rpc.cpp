@@ -167,6 +167,7 @@ void *listenForClient(void * id) {
                     printf("code %d\n", code);
 
                     if (code == EXECUTE){
+                        printf("\n RPC EXECUTE\n");
                         char* name =  recv_string(i);
                         int* argTypes = recv_argTypes(i);
                         printf("test 0\n");
@@ -187,6 +188,7 @@ void *listenForClient(void * id) {
                         }
                         printf("result is: %d\n", res);
                         printf("%d\n", *((int*)args));
+                        printf("\n RPC EXECUTE END\n");
                         
                         free(name);
                     }
@@ -391,27 +393,29 @@ int rpcCacheCall(char* name, int* argTypes, void** args){
 
 int rpcRegister(char* name, int* argTypes, skeleton f){
     // REGISTER server_identifier_len server_identifier port len_name name len_argTypes argTypes 
-    printf("sending server info to binder\n");
+    printf("\nRPC REGISTER\n");
+    // printf("sending server info to binder\n");
     int len = len_argTypes(argTypes);
-    printf("Size of argTypes %d", len);
+    // printf("Size of argTypes %d", len);
     send_integer(sockfdBinder, REGISTER);
     send_string(sockfdBinder, SERVER_ADDRESS);
     send_integer(sockfdBinder, PORT);
     send_string(sockfdBinder, name);
     send_argTypes(sockfdBinder, argTypes);
-    printf("done sending server info to binder\n");
+    // printf("done sending server info to binder\n");
 
     // recv either REGISTER_SUCCESS or REGISTER_FAILURE
-    printf("receiving info from binder to server");
+    // printf("receiving info from binder to server");
     int code = recv_integer(sockfdBinder);
     int error = recv_integer(sockfdBinder);
-    printf("done receiving info from binder to server");
+    // printf("done receiving info from binder to server");
 
     if (code == REGISTER_FAILURE){
         return error;
     } else {
     	//register was successful so lets add it to map
-    	struct functionPair pair;
+    	printf("\nREGISTER WAS SUCCESS, adding to map for SKELETON\n");
+        struct functionPair pair;
     	pair.name = name;
     	pair.argTypes = argTypes;
     	struct functionMap map;
@@ -420,6 +424,7 @@ int rpcRegister(char* name, int* argTypes, skeleton f){
     	functions.push_back(map);
     	
     }
+    printf("\n RPC REGISTER END\n");
     return 0;
 }
 
