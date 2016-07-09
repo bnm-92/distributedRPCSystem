@@ -54,6 +54,12 @@ struct serverFunction {
 
 vector<serverFunction> cache;
 
+void printArgs(int* argTypes, void ** args) {
+    for (int i=0; i<len_argTypes(argTypes)-1; i++) {
+        printf("%d\n", *(int*)args[i]);
+    }
+}
+
 int getargTypesLength(int* argTypes) {
 	// write code here
 	int n = 0;
@@ -170,13 +176,10 @@ void *listenForClient(void * id) {
                         printf("\n RPC EXECUTE\n");
                         char* name =  recv_string(i);
                         int* argTypes = recv_argTypes(i);
-                        printf("test 0\n");
+
                         void** args = recv_args(i, argTypes);
-
-                        printf("test 1\n");
-                        printf("ryan %d\n", args[1]);
-                        printf("test 2\n");
-
+                        printf("\n printing final args\n");
+                        printArgs(argTypes, args);
                         // Now we have all the info we need to run the function
                         // So run it
 
@@ -329,12 +332,6 @@ int connectToSocket(int port, hostent* server){
     return sockfd;
 }
 
-void printArgs(int* argTypes, void ** args) {
-    for (int i=0; i<len_argTypes(argTypes)-1; i++) {
-        printf("%d\n", *(int*)args[i]);
-    }
-}
-
 int rpcCall(char* name, int* argTypes, void** args){
     printf("\nRPC CALL\n");
     printf("START CONNECT TO BINDER\n");
@@ -385,7 +382,7 @@ int rpcCall(char* name, int* argTypes, void** args){
 
     send_args(sockfd, argTypes, args);
 
-    printf("done sending to server\n");
+    printf("\ndone sending to server\n");
 
     // Receive from server
     printf("done receiving from binder\n");

@@ -145,19 +145,19 @@ int* recv_argTypes(int sockid){
 }
 
 void** recv_args(int sockid, int* argTypes){
+    printf("\n in recv args\n");
     int num_args = len_argTypes(argTypes) - 1;
     void** args = (void **)malloc(num_args * sizeof(void *));
     for (int i=0; i<num_args; i++){
-        if (get_arg_input_type(argTypes[i]) == ARG_OUTPUT){
-            continue;
-        }
         int type = get_arg_type(argTypes[i]);
         int arg_len = get_arg_length(argTypes[i]);
-        printf("type %d arg_len %d\n", type, arg_len);
-        void* buf = (void*)malloc(numBytes(type, arg_len));
-        recv(sockid, &buf, numBytes(type, arg_len), 0);
-        args[i] = buf;
-        printf("ryan %d\n", args[i]);
+        int* buf = (int*)malloc(numBytes(type, arg_len));
+        printf("\n buf numBytes are %d\n", numBytes(type, arg_len));
+        recv(sockid, &(*buf), numBytes(type, arg_len), 0);
+        printf("\n buff is %d\n", *buf);
+        args[i] = (void*)buf;
+        printf("printing\n");
+        printf("\nreceived: %d\n", *(int*)args[i]);
     }
     return args;
 }
