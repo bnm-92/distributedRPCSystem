@@ -69,12 +69,18 @@ int len_argTypes(int* argTypes){
     return i + 1;
 }
 
-int get_arg_input_type(int argType){
-    // first bit 1 -> 128, second bit 1 -> 64
-    if (((argType >> 24) & 0xff) == 128){
-        return ARG_INPUT;
+int is_input(int argType){
+    if (argType & ( 1 << ARG_INPUT )) {
+        return 1;
     }
-    return ARG_OUTPUT;
+    return 0;
+}
+
+int is_output(int argType){
+    if (argType & ( 1 << ARG_OUTPUT )) {
+        return 1;
+    }
+    return 0;
 }
 
 int get_arg_type(int argType){
@@ -107,7 +113,7 @@ void send_args(int sockid, int* argTypes, void** args){
         int type = get_arg_type(argTypes[i]);
         int arg_len = get_arg_length(argTypes[i]);
         send(sockid, args[i], numBytes(type, arg_len), 0);
-        if (get_arg_input_type(argTypes[i]) == ARG_INPUT){
+        if (is_input(argTypes[i])){
             printf("bytes %d\n", numBytes(type, arg_len));
             printf("sent arg %d\n", *((int *)args[i]));
         }
