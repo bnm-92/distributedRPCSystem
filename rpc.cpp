@@ -329,6 +329,12 @@ int connectToSocket(int port, hostent* server){
     return sockfd;
 }
 
+void printArgs(int* argTypes, void ** args) {
+    for (int i=0; i<len_argTypes(argTypes)-1; i++) {
+        printf("%d\n", *(int*)args[i]);
+    }
+}
+
 int rpcCall(char* name, int* argTypes, void** args){
     printf("\nRPC CALL\n");
     printf("START CONNECT TO BINDER\n");
@@ -374,6 +380,8 @@ int rpcCall(char* name, int* argTypes, void** args){
     send_integer(sockfd, EXECUTE);
     send_string(sockfd, name);
     send_argTypes(sockfd, argTypes);
+
+    printArgs(argTypes, args);
 
     send_args(sockfd, argTypes, args);
 
