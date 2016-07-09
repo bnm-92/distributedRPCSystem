@@ -24,7 +24,7 @@ static const size_t max_size= 256;
 
 using namespace std;
 
-int end;
+int end1;
 int sendTermMsg;
 int breakWhile;
 int numConnections;
@@ -58,7 +58,7 @@ int findNumber(vector<int>servers, int s) {
 }
 
 int main(int argc, char* argv[]) {
-    end = 0;
+    end1 = 0;
     sendTermMsg = 0;
     numConnections = 0;
     breakWhile = 0;
@@ -232,7 +232,7 @@ int main(int argc, char* argv[]) {
                         close(i); // bye!
                         FD_CLR(i, &master); // remove from master set
                         numConnections--;
-                        if ((end == 1) && (numConnections == 0)) {
+                        if ((end1 == 1) && (numConnections == 0)) {
                             breakWhile = 1;
                         }
                         break;
@@ -247,7 +247,6 @@ int main(int argc, char* argv[]) {
                         // Determine which server info to return
                         serverFunction s;
                         bool found_server = false;
-                        bool first_check = false;
                         vector<serverFunction>::size_type copy_idx = db_idx;
                         vector<serverFunction>::size_type size = db.functions.size();
                         db_idx++;
@@ -333,7 +332,44 @@ int main(int argc, char* argv[]) {
                     } else if (code == TERMINATE) {
                         // loop through all servers and terminate
                         sendTermMsg = 1;
-                        end = 1;
+                        end1 = 1;
+                    } else if (code == CACHE_REQUEST){
+                        char* name = recv_string(i);
+                        int* argTypes = recv_argTypes(i);
+                        vector<serverFunction> matching_functions;
+                        int len = len_argTypes(argTypes);
+                        // find matching functions
+                        for(std::vector<serverFunction>::size_type idx = 0; idx != db.functions.size(); idx++) {
+                            if (strcmp(db.functions[idx].name,name) == 0 && len == db.functions[idx].numArgs){
+                                bool same = true;
+                                for (int j=0;j<len; j++){
+                                    if (
+                                        get_arg_type(argTypes[j]) != get_arg_type(db.functions[idx].argTypes[j]) ||
+                                        is_input(argTypes[j]) != is_input(db.functions[idx].argTypes[j]) ||
+                                        is_output(argTypes[j]) != is_output(db.functions[idx].argTypes[j]) ||
+                                        (get_arg_length(argTypes[j]) > 0) !=  (get_arg_length(db.functions[idx].argTypes[j]) > 0)
+                                    ){
+                                        same = false;
+                                    }
+                                }
+                                if (same){
+                                    printf ("%s %s\n", name, db.functions[idx].name);
+                                    matching_functions.push_back(db.functions[idx]);
+                                }
+                            }
+                        }
+                        //Send matching functions
+                        printf("size %d\n", matching_functions.size());
+                        if (matching_functions.size() > 0){
+                            send_integer(i, CACHE_SUCCESS);
+                            send_integer(i, matching_functions.size());
+                            for (std::vector<serverFunction>::size_type idx = 0; idx != matching_functions.size(); idx++){
+                                printf("sending server...%s\n", matching_functions[idx].name);
+                                send_server(i, matching_functions[idx]);
+                            }
+                        } else {
+                            send_integer(i, CACHE_FAILURE);
+                        }
                     }
                 } // END handle data from client
             } // END got new incoming connection

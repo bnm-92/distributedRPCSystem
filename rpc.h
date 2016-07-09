@@ -34,6 +34,9 @@ extern "C" {
 #define EXECUTE_SUCCESS 	8
 #define EXECUTE_FAILURE 	9
 #define TERMINATE       	10
+#define CACHE_REQUEST		11
+#define CACHE_SUCCESS		12
+#define CACHE_FAILURE		13
 
 typedef int (*skeleton)(int *, void **);
 

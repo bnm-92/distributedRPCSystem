@@ -33,11 +33,12 @@ char* SERVER_ADDRESS;
 int PORT;
 
 struct serverFunction {
-	char* name;
-	int* argTypes;
-	int sockfd;
+    char* name;
+    int* argTypes;
+    int sockfd;
     char* address;
     int localfd;
+    int numArgs;
 };
 
 vector<serverFunction> cache;
@@ -389,7 +390,168 @@ int rpcCall(char* name, int* argTypes, void** args){
     return 0;
 }
 
+int rpcCallServer(struct serverFunction s, void** args){
+    // Connect to server
+    struct hostent *server_address = gethostbyname(s.address);
+    int sockfd = connectToSocket(s.sockfd, server_address);
+    if (sockfd < 0){
+        return -1;
+    }
+
+    // request_msg format: EXECUTE len_name name len_argTypes argTypes len_args args
+    send_integer(sockfd, EXECUTE);
+    send_string(sockfd, s.name);
+    send_argTypes(sockfd, s.argTypes);
+    send_args(sockfd, s.argTypes, args);
+
+
+    // Receive from server after it executes
+    int code = recv_integer(sockfd);
+    if (code == EXECUTE_SUCCESS){
+        char* name = recv_string(sockfd);
+        int* argTypes = recv_argTypes(sockfd);
+        void ** args2 = (recv_args(sockfd, argTypes));
+
+        for (int i=0; i<len_argTypes(argTypes)-1; i++) {
+            args[i] = args2[i];
+        }
+    } else {
+        return -1; //execution was not success
+    }
+
+    printf("\nRPC CALL END\n");
+    return 0;
+}
+
+int rpcCallBinder(char* name, int* argTypes, void** args){
+    printf("\nRPC CALL\n");
+
+    // Remove all functions first
+    for(vector<serverFunction>::size_type i = 0; i != cache.size();) {
+        bool same = false;
+        int len = len_argTypes(argTypes);
+        if (strcmp(cache[i].name,name) == 0 && len == cache[i].numArgs){
+            for (int j=0;j<len; j++){
+                if (
+                    get_arg_type(argTypes[j]) == get_arg_type(cache[i].argTypes[j]) &&
+                    is_input(argTypes[j]) == is_input(cache[i].argTypes[j]) &&
+                    is_output(argTypes[j]) == is_output(cache[i].argTypes[j]) &&
+                    (get_arg_length(argTypes[j]) > 0) ==  (get_arg_length(cache[i].argTypes[j]) > 0)
+                ){
+                    same = true;
+                }
+            }
+        }
+        if (same){
+            cache.erase(cache.begin() + i);
+        } else {
+            i++;
+        }
+    }
+
+    int binder_port = atoi(getenv("BINDER_PORT"));
+    struct hostent *binder_address = gethostbyname(getenv("BINDER_ADDRESS"));
+
+    int sockfd = connectToSocket(binder_port, binder_address); 
+    if (sockfd < 0){
+        return -1;
+    }
+
+    send_integer(sockfd, CACHE_REQUEST);
+    send_string(sockfd, name);
+    send_argTypes(sockfd, argTypes);
+
+    int code = recv_integer(sockfd);
+    if (code != CACHE_SUCCESS){
+        return -1;
+    }
+
+    int num_servers = recv_integer(sockfd);
+    printf("num servers %d\n", num_servers);
+    struct serverFunction *servers = recv_servers(sockfd, num_servers);
+    for (int i=0; i<num_servers; i++){
+        cache.push_back(servers[i]);
+        printf("pushing %s\n\n", servers[i].name);
+    }
+    printf("size cache %d\n", cache.size());
+
+    close(sockfd);
+}
+
 int rpcCacheCall(char* name, int* argTypes, void** args){
+    serverFunction s;
+    int success = -1;
+    int len = len_argTypes(argTypes);
+    for(vector<serverFunction>::size_type i = 0; i != cache.size(); i++){
+        if (strcmp(cache[i].name,name) == 0 && len == cache[i].numArgs){
+            bool same = true;
+            for (int j=0;j<len_argTypes(argTypes); j++){
+                if (
+                    get_arg_type(argTypes[j]) != get_arg_type(cache[i].argTypes[j]) ||
+                    is_input(argTypes[j]) != is_input(cache[i].argTypes[j]) ||
+                    is_output(argTypes[j]) != is_output(cache[i].argTypes[j]) ||
+                    (get_arg_length(argTypes[j]) > 0) !=  (cache[i].argTypes[j] > 0)
+                ){
+                    same = false;
+                }
+            }
+            if (same){
+                s = cache[i];
+                success = rpcCallServer(s, args);
+                if (success == 0){
+                    printf("successfully hit cache and returned\n");
+                    break;
+                }
+            }
+        }
+    }
+    if (success != 0){
+        printf("didn't hit cache now pulling\n");
+        rpcCallBinder(name, argTypes, args);
+        printf("size of cache %d\n", cache.size());
+        for(vector<serverFunction>::size_type i = 0; i != cache.size(); i++){
+            printf("comparing %s %s %d %d\n", cache[i].name, name, len, cache[i].numArgs);
+            if (strcmp(cache[i].name,name) == 0 && len == cache[i].numArgs){
+                bool same = true;
+                for (int j=0;j<len_argTypes(argTypes); j++){
+                    int arg_len = 0;
+                    if(get_arg_length(argTypes[j]) > 0){
+                        arg_len = 1;
+                    }
+                    int cache_arg_len = 0;
+                    if(get_arg_length(cache[i].argTypes[j]) > 0){
+                        cache_arg_len = 1;
+                    }
+                    if (
+                        (get_arg_type(argTypes[j]) != get_arg_type(cache[i].argTypes[j])) ||
+                        (is_input(argTypes[j]) != is_input(cache[i].argTypes[j])) ||
+                        (is_output(argTypes[j]) != is_output(cache[i].argTypes[j])) ||
+                        (arg_len != cache_arg_len)
+                    ){
+                        printf("not the same %d %d\n", argTypes[j], cache[i].argTypes[j]);
+                        // printf("arg type %d %d\n", get_arg_type(argTypes[j]), get_arg_type(cache[i].argTypes[j]));
+                        // printf("is input %d %d\n", is_input(argTypes[j]), is_input(cache[i].argTypes[j]));
+                        // printf("is output %d %d\n", is_output(argTypes[j]), is_output(cache[i].argTypes[j]));
+                        printf("arg len %d %d\n", (get_arg_length(argTypes[j]) > 0), (get_arg_length(cache[i].argTypes[j]) > 0));
+                        printf("%d\n",((get_arg_length(argTypes[j]) > 0) !=  (cache[i].argTypes[j] > 0)));
+                        same = false;
+                    }
+                }
+                if (same){
+                    s = cache[i];
+                    success = rpcCallServer(s, args);
+                    if (success == 0){
+                        printf("successfully hit cache and returned\n");
+                        break;
+                    }
+                }
+            }
+        }
+        if (success != 0){
+            printf("didn't hit cache again :(\n");
+            return -1;
+        }
+    }
 	return 0;
 }
 

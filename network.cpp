@@ -20,6 +20,15 @@
 #define ARG_INPUT   31
 #define ARG_OUTPUT  30
 
+struct serverFunction {
+    char* name;
+    int* argTypes;
+    int sockfd;
+    char* address;
+    int localfd;
+    int numArgs;
+};
+
 
 int numBytes(int type, int arrLen) {
     int size = 0;
@@ -111,6 +120,17 @@ void send_args(int sockid, int* argTypes, void** args){
     }
 }
 
+void send_server(int sockid, serverFunction server){
+    printf("send server %s\n", server.name);
+    send_string(sockid, server.name);
+    send_argTypes(sockid, server.argTypes);
+    send_integer(sockid, server.sockfd);
+    send_string(sockid, server.address);
+    send_integer(sockid, server.localfd);
+    send_integer(sockid, server.numArgs);
+    printf("func %s %d %s %d %d\n", server.name, server.sockfd, server.address, server.localfd, server.numArgs);
+}
+
 int recv_integer(int sockid){
     int val;
     int val_net;
@@ -149,4 +169,20 @@ void** recv_args(int sockid, int* argTypes){
     }
 
     return args;
+}
+
+struct serverFunction* recv_servers(int sockid, int num_servers){
+    struct serverFunction *servers = (serverFunction*)malloc(num_servers*sizeof(serverFunction));
+    for (int i=0; i<num_servers; i++){
+        struct serverFunction s;
+        s.name = recv_string(sockid);
+        s.argTypes = recv_argTypes(sockid);
+        s.sockfd = recv_integer(sockid);
+        s.address = recv_string(sockid);
+        s.localfd = recv_integer(sockid);
+        s.numArgs = recv_integer(sockid);
+        servers[i] = s;
+        printf("func %s %d %s %d %d", s.name, s.sockfd, s.address, s.localfd, s.numArgs);
+    }
+    return servers;
 }

@@ -23,3 +23,7 @@ void** recv_args(int sockid, int* argTypes);
 int is_input(int argType);
 
 int is_output(int argType);
+
+struct serverFunction* recv_servers(int sockid, int num_servers);
+
+void send_server(int sockid, serverFunction server);
