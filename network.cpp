@@ -121,14 +121,13 @@ void send_args(int sockid, int* argTypes, void** args){
 }
 
 void send_server(int sockid, serverFunction server){
-    printf("send server %s\n", server.name);
     send_string(sockid, server.name);
     send_argTypes(sockid, server.argTypes);
     send_integer(sockid, server.sockfd);
     send_string(sockid, server.address);
     send_integer(sockid, server.localfd);
     send_integer(sockid, server.numArgs);
-    printf("func %s %d %s %d %d\n", server.name, server.sockfd, server.address, server.localfd, server.numArgs);
+    //printf("func %s %d %s %d %d\n", server.name, server.sockfd, server.address, server.localfd, server.numArgs);
 }
 
 int recv_integer(int sockid){
@@ -182,7 +181,7 @@ struct serverFunction* recv_servers(int sockid, int num_servers){
         s.localfd = recv_integer(sockid);
         s.numArgs = recv_integer(sockid);
         servers[i] = s;
-        printf("func %s %d %s %d %d", s.name, s.sockfd, s.address, s.localfd, s.numArgs);
+        //printf("func %s %d %s %d %d", s.name, s.sockfd, s.address, s.localfd, s.numArgs);
     }
     return servers;
 }

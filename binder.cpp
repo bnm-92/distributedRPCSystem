@@ -287,7 +287,7 @@ int main(int argc, char* argv[]) {
                                 if (same){
                                     s = db.functions.at(copy_idx);
                                     found_server = true;
-                                    printf("found a server with a matching function\n");
+                                    // printf("found a server with a matching function\n");
                                 }
                             }
                         }
@@ -353,18 +353,18 @@ int main(int argc, char* argv[]) {
                                     }
                                 }
                                 if (same){
-                                    printf ("%s %s\n", name, db.functions[idx].name);
+                                    //printf ("%s %s\n", name, db.functions[idx].name);
                                     matching_functions.push_back(db.functions[idx]);
                                 }
                             }
                         }
                         //Send matching functions
-                        printf("size %d\n", matching_functions.size());
+                        // printf("size %d\n", matching_functions.size());
                         if (matching_functions.size() > 0){
                             send_integer(i, CACHE_SUCCESS);
                             send_integer(i, matching_functions.size());
                             for (std::vector<serverFunction>::size_type idx = 0; idx != matching_functions.size(); idx++){
-                                printf("sending server...%s\n", matching_functions[idx].name);
+                                // printf("sending server...%s\n", matching_functions[idx].name);
                                 send_server(i, matching_functions[idx]);
                             }
                         } else {
