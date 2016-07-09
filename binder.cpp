@@ -100,7 +100,7 @@ int main(int argc, char* argv[]) {
 
     // if we got here, it means we didn't get bound
     if (p == NULL) {
-        fprintf(stderr, "selectserver: failed to bind\n");
+        // fprintf(stderr, "selectserver: failed to bind\n");
         exit(2);
     }
 
@@ -108,14 +108,14 @@ int main(int argc, char* argv[]) {
     
     gethostname(hostIP, INET6_ADDRSTRLEN);
     printf("BINDER_ADDRESS %s\n", hostIP);    
-    printf("BINDER_ADDRESS_PORT %d\n", htons(port_num));
+    printf("BINDER_PORT %d\n", htons(port_num));
 
     freeaddrinfo(ai); // all done with this
 
 
     // listen
-    if (listen(listener, 10) == -1) {
-        perror("listen");
+    if (listen(listener, 1000) == -1) {
+        // perror("listen");
         exit(3);
     }
 
@@ -131,7 +131,7 @@ int main(int argc, char* argv[]) {
     for(;;) {
         read_fds = master; // copy it
         if (select(fdmax+1, &read_fds, NULL, NULL, NULL) == -1) {
-            perror("select");
+            // perror("select");
             exit(4);
         }
 
@@ -146,7 +146,7 @@ int main(int argc, char* argv[]) {
                         &addrlen);
 
                     if (newfd == -1) {
-                        perror("accept");
+                        // perror("accept");
                     } else {
                         FD_SET(newfd, &master); // add to master set
                         if (newfd > fdmax) {    // keep track of the max
@@ -156,12 +156,12 @@ int main(int argc, char* argv[]) {
                         // 2. found a new connection, don't need to do anything here
 
 
-                        printf("selectserver: new connection from %s on "
-                            "socket %d\n",
-                            inet_ntop(remoteaddr.ss_family,
-                                get_in_addr((struct sockaddr*)&remoteaddr),
-                                remoteIP, INET6_ADDRSTRLEN),
-                            newfd);
+                        // printf("selectserver: new connection from %s on "
+                        //     "socket %d\n",
+                        //     inet_ntop(remoteaddr.ss_family,
+                        //         get_in_addr((struct sockaddr*)&remoteaddr),
+                        //         remoteIP, INET6_ADDRSTRLEN),
+                        //     newfd);
                     }
                 } else {
                 	// printf("handle data\n");
@@ -175,7 +175,7 @@ int main(int argc, char* argv[]) {
                         //got error or connection closed by client
                         if (nbytes == 0) {
                             //connection closed - if it was a server remove from database
-                            printf("selectserver: socket %d hung up\n", i);
+                            // printf("selectserver: socket %d hung up\n", i);
                             for(std::vector<serverFunction>::size_type j = 0; j != db.functions.size();) {
                                 if(db.functions[j].localfd == i){
                                     db.functions.erase(db.functions.begin() + j);
@@ -184,14 +184,13 @@ int main(int argc, char* argv[]) {
                                 }
                             }
                         } else {
-                            perror("recv");
+                            // perror("recv");
                         }
                         close(i); // bye!
                         FD_CLR(i, &master); // remove from master set
                         break;
                     }
                     code = ntohl(code_net);
-                    printf("code %d\n", code);
 
                     if (code == LOC_REQUEST){
                         char* name = recv_string(i);
@@ -217,22 +216,16 @@ int main(int argc, char* argv[]) {
                                 if (same){
                                     s = db.functions.at(i);
                                     found_server = true;
-                                    printf("found a server with a matching function\n");
                                     break;
                                 }
                             }
                         }
+                    
                         if (!found_server){
                             send_integer(i, LOC_FAILURE);
                         } else {
                             send_integer(i, LOC_SUCCESS);
-
-                            printf("TEST\n");
-                            printf("s.sockfd %d\n",s.sockfd);
                             send_integer(i, s.sockfd);
-
-                            printf("s.address %s\n",s.address);
-                            printf("len %d\n", strlen(s.address));
                             send_string(i, s.address);
                         }
 
@@ -241,37 +234,31 @@ int main(int argc, char* argv[]) {
 
 
                     } else if (code == REGISTER){
-                        char* server_identifier = recv_string(i);
-                        int server_port = recv_integer(i);
-                        char* name = recv_string(i);
+                        try {
+                            char* server_identifier = recv_string(i);
+                            int server_port = recv_integer(i);
+                            char* name = recv_string(i);
 
-                        // int size_argTypes = recv_integer(i);
-                        // int argTypes[size_argTypes/2];
-                        // for (int j=0; j<size_argTypes/2; j++){
-                        //     int argType_net;
-                        //     recv(i, &argType_net, 2, 0);
-                        //     argTypes[j] = ntohl(argType_net);
-                        //     printf("argType %d\n", argTypes[j]);
-                        // }
-                        int *argTypes = recv_argTypes(i);
-                        int len = len_argTypes(argTypes);
+                            int *argTypes = recv_argTypes(i);
+                            int len = len_argTypes(argTypes);
 
-                        // Register server info to database
-                        serverFunction server_function = {name, argTypes, server_port, server_identifier, i, len};
-                        db.functions.push_back(server_function);
-                        printf("Added function %s at port %d to db\n", server_function.name, server_function.sockfd);
+                            // Register server info to database
+                            serverFunction server_function = {name, argTypes, server_port, server_identifier, i, len};
+                            db.functions.push_back(server_function);
 
-                        // Stub code assuming we register successfully
-                        send_integer(i, REGISTER_SUCCESS);
+                            // Stub code assuming we register successfully
+                            send_integer(i, REGISTER_SUCCESS);
 
-                        // This integer will hold any warnings or errors
-                        int error = 0;
-                        send_integer(i, error);
-                        
-                        // Need to free these when server disconnects
-                        //free(name);
-                        //free(argTypes);
+                            // This integer will hold any warnings or errors
+                            int error = 0;
+                            send_integer(i, error);
+                            
+                            // Need to free these when server disconnects
+                            //free(name);
+                            //free(argTypes);
+                        } catch (Exception e) {
 
+                        }
                     }
                 } // END handle data from client
             } // END got new incoming connection
@@ -295,6 +282,6 @@ void sendMessage(int s, char* buf, unsigned int len) {
 
     len = total; // return number actually sent here
     if (n <0)
-        perror("send");
+        // perror("send");
 }
 
