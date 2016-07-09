@@ -394,12 +394,15 @@ int rpcCall(char* name, int* argTypes, void** args){
 
     // Receive from server after it executes
     code = recv_integer(sockfd);
-    if (code == EXECUTE_SUCCESS){
-        name = recv_string(sockfd);
-        argTypes = recv_argTypes(sockfd);
-        args = recv_args(sockfd, argTypes);
+    name = recv_string(sockfd);
+    argTypes = recv_argTypes(sockfd);
+    void** ret_args = recv_args(sockfd, argTypes);
+
+    for (int i=0; i<len_argTypes(argTypes)-1; i++){
+        args[i] = ret_args[i];
     }
 
+    printArgs(argTypes, args);
 
     printf("done receiving from server\n");
 
