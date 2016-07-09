@@ -117,7 +117,7 @@ void *listenForClient(void * id) {
     int i;
     // listen
     if (listen(listener, 10) == -1) {
-        perror("listen");
+        // perror("listen");
         exit(3);
     }
 
@@ -130,7 +130,7 @@ void *listenForClient(void * id) {
     for(;;) {
         read_fds = master; // copy it
         if (select(fdmax+1, &read_fds, NULL, NULL, NULL) == -1) {
-            perror("select");
+            // perror("select");
             exit(4);
         }
 
@@ -145,7 +145,7 @@ void *listenForClient(void * id) {
                         &addrlen);
 
                     if (newfd == -1) {
-                        perror("accept");
+                        // perror("accept");
                     } else {
                         FD_SET(newfd, &master); // add to master set
                         if (newfd > fdmax) {    // keep track of the max
@@ -162,16 +162,16 @@ void *listenForClient(void * id) {
                         //got error or connection closed by client
                         if (nbytes == 0) {
                             //connection closed
-                            printf("selectserver: socket %d hung up\n", i);
+                            // printf("selectserver: socket %d hung up\n", i);
                         } else {
-                            perror("recv");
+                            // perror("recv");
                         }
                         close(i); // bye!
                         FD_CLR(i, &master); // remove from master set
                         break;
                     }
                     code = ntohl(code_net);
-                    printf("code %d\n", code);
+                    // printf("code %d\n", code);
 
                     if (code == EXECUTE){
                         printf("\n RPC EXECUTE\n");
@@ -179,8 +179,7 @@ void *listenForClient(void * id) {
                         int* argTypes = recv_argTypes(i);
 
                         void** args = recv_args(i, argTypes);
-                        printf("\n printing final args\n");
-                        printArgs(argTypes, args);
+                        // printf("\n printing final args\n");
                         // Now we have all the info we need to run the function
                         // So run it
 
@@ -189,15 +188,17 @@ void *listenForClient(void * id) {
                         if (skel) {
                         	res = skel(argTypes, args);	
                         }
-                        printf("result is: %d\n", res);
-                        // printf("%d\n", *((int*)args));
                         printf("\n RPC EXECUTE END\n");
 
                         //Success send back to client
-                        send_integer(i, EXECUTE_SUCCESS);
-                        send_string(i, name);
-                        send_argTypes(i, argTypes);
-                        send_args(i, argTypes, args);
+                        if (res == 0) {
+                            send_integer(i, EXECUTE_SUCCESS);
+                            send_string(i, name);
+                            send_argTypes(i, argTypes);
+                            send_args(i, argTypes, args); 
+                        } else {
+                            send_integer(i, EXECUTE_FAILURE);
+                        }
                         
                         free(name);
                         free(argTypes);
@@ -230,7 +231,7 @@ int rpcInit(){
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_flags = AI_PASSIVE;
     if ((rv = getaddrinfo(NULL, "0", &hints, &ai)) != 0) {
-        fprintf(stderr, "selectserver: %s\n", gai_strerror(rv));
+        // fprintf(stderr, "selectserver: %s\n", gai_strerror(rv));
         exit(1);
     }
     int port_num;
@@ -256,14 +257,14 @@ int rpcInit(){
 
     // if we got here, it means we didn't get bound
     if (p == NULL) {
-        fprintf(stderr, "selectserver: failed to bind\n");
+        // fprintf(stderr, "selectserver: failed to bind\n");
         exit(2);
     }
 
     // print your server name and port here
     gethostname(hostIP, INET6_ADDRSTRLEN);
-    printf("SERVER_ADDRESS %s\n", hostIP);    
-    printf("SERVER_ADDRESS_PORT %d\n", htons(port_num));
+    // printf("SERVER_ADDRESS %s\n", hostIP);    
+    // printf("SERVER_ADDRESS_PORT %d\n", htons(port_num));
     
     SERVER_ADDRESS = (char*)malloc(sizeof(hostIP));
     strncpy(SERVER_ADDRESS, hostIP, sizeof(hostIP));
@@ -287,7 +288,7 @@ int rpcInit(){
     hintsB.ai_socktype = SOCK_STREAM;
 
     if ((rvB = getaddrinfo(hostname, (char*)port, &hintsB, &servinfoB)) != 0) {
-        fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
+        // fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
         return 1;
     }
 
@@ -309,17 +310,17 @@ int rpcInit(){
     }
 
     if (pB == NULL) {
-        fprintf(stderr, "server: failed to connect\n");
+        // fprintf(stderr, "server: failed to connect\n");
         return 2;
     }
 
     inet_ntop(pB->ai_family, get_in_addr((struct sockaddr *)pB->ai_addr), sB, sizeof sB);
-    printf("server: connecting to %s\n", sB);
+    // printf("server: connecting to %s\n", sB);
     // while(1) {
     //     //do some work
     // }
     freeaddrinfo(servinfoB);
-    printf("\nRPC INIT END\n");
+    // printf("\nRPC INIT END\n");
     return 0;
 }
 
@@ -342,28 +343,23 @@ int connectToSocket(int port, hostent* server){
 
 int rpcCall(char* name, int* argTypes, void** args){
     printf("\nRPC CALL\n");
-    printf("START CONNECT TO BINDER\n");
-    // Connect to binder
+
     int binder_port = atoi(getenv("BINDER_PORT"));
     struct hostent *binder_address = gethostbyname(getenv("BINDER_ADDRESS"));
+
     int sockfd = connectToSocket(binder_port, binder_address); 
     if (sockfd < 0){
-        printf(":(\n");
         return -1;
     }
 
-    // request_msg format: LOC_REQUEST len_name name len_argTypes argTypes  
     int i;
-
     send_integer(sockfd, LOC_REQUEST);
     send_string(sockfd, name);
     send_argTypes(sockfd, argTypes);
-    
-    printf("\ndone sending to binder\n");
 
     int code = recv_integer(sockfd);
     if (code != LOC_SUCCESS){
-        return -1;
+        return -1; // LOC_FAILURE
     }
 
     int server_port = recv_integer(sockfd);
@@ -371,9 +367,6 @@ int rpcCall(char* name, int* argTypes, void** args){
 
     close(sockfd);
     
-    printf("done receiving from binder\n");
-
-    printf("START CONNECT TO SERVER\n");
     // Connect to server
     struct hostent *server_address = gethostbyname(server_addr);
     sockfd = connectToSocket(server_port, server_address);
@@ -385,26 +378,23 @@ int rpcCall(char* name, int* argTypes, void** args){
     send_integer(sockfd, EXECUTE);
     send_string(sockfd, name);
     send_argTypes(sockfd, argTypes);
-
-    printArgs(argTypes, args);
-
     send_args(sockfd, argTypes, args);
 
-    printf("\ndone sending to server\n");
 
     // Receive from server after it executes
     code = recv_integer(sockfd);
-    name = recv_string(sockfd);
-    argTypes = recv_argTypes(sockfd);
-    void** ret_args = recv_args(sockfd, argTypes);
+    if (code == EXECUTE_SUCCESS){
+        name = recv_string(sockfd);
+        argTypes = recv_argTypes(sockfd);
+        void ** args2 = (recv_args(sockfd, argTypes));
 
-    for (int i=0; i<len_argTypes(argTypes)-1; i++){
-        args[i] = ret_args[i];
+        for (int i=0; i<len_argTypes(argTypes)-1; i++) {
+
+            args[i] = args2[i];
+        }
+    } else {
+        return -1; //execution was not success
     }
-
-    printArgs(argTypes, args);
-
-    printf("done receiving from server\n");
 
     free(server_addr);
     printf("\nRPC CALL END\n");
@@ -418,27 +408,24 @@ int rpcCacheCall(char* name, int* argTypes, void** args){
 int rpcRegister(char* name, int* argTypes, skeleton f){
     // REGISTER server_identifier_len server_identifier port len_name name len_argTypes argTypes 
     printf("\nRPC REGISTER\n");
-    // printf("sending server info to binder\n");
     int len = len_argTypes(argTypes);
-    // printf("Size of argTypes %d", len);
+
     send_integer(sockfdBinder, REGISTER);
     send_string(sockfdBinder, SERVER_ADDRESS);
     send_integer(sockfdBinder, PORT);
     send_string(sockfdBinder, name);
     send_argTypes(sockfdBinder, argTypes);
-    // printf("done sending server info to binder\n");
 
     // recv either REGISTER_SUCCESS or REGISTER_FAILURE
-    // printf("receiving info from binder to server");
+
     int code = recv_integer(sockfdBinder);
     int error = recv_integer(sockfdBinder);
-    // printf("done receiving info from binder to server");
 
     if (code == REGISTER_FAILURE){
         return error;
     } else {
     	//register was successful so lets add it to map
-    	printf("\nREGISTER WAS SUCCESS, adding to map for SKELETON\n");
+
         struct functionPair pair;
     	pair.name = name;
     	pair.argTypes = argTypes;
