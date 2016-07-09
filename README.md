@@ -23,6 +23,9 @@ LOC_SUCCESS:
 LOC_FAILURE
 	The client returns -1
 
+Addionally the client may send TERMINATE to the binder, in this case
+the binder will send a msg to all servers to terminate
+
 
 Server/Binder protocol:
 
@@ -50,6 +53,9 @@ REGISTER_FAILURE:
 
 REGISTER_SUCCESS:
 	the server adds a map for the skeleton function to be called later
+
+Addionally the binder may send TERMINATE to the server, in this case the
+server will terminate
 
 Client/Server
 
