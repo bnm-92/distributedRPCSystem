@@ -205,7 +205,12 @@ int main(int argc, char* argv[]) {
                             if (strcmp(db.functions[i].name,name) == 0 && len == db.functions[i].numArgs){
                                 bool same = true;
                                 for (int j=0;j<len; j++){
-                                    if (argTypes[j] != db.functions[i].argTypes[j]){
+                                    if (
+                                        get_arg_type(argTypes[j]) != get_arg_type(db.functions[i].argTypes[j]) ||
+                                        is_input(argTypes[j]) != is_input(db.functions[i].argTypes[j]) ||
+                                        is_output(argTypes[j]) != is_output(db.functions[i].argTypes[j]) ||
+                                        (get_arg_length(argTypes[j]) > 0) !=  (get_arg_length(db.functions[i].argTypes[j]) > 0)
+                                    ){
                                         same = false;
                                     }
                                 }
