@@ -30,20 +30,6 @@ pthread_t clientThread;
 char* SERVER_ADDRESS;
 int PORT;
 
-// Define some types
-int char_output = (1 << ARG_OUTPUT) | (ARG_CHAR << 16);
-int char_input = (1 << ARG_INPUT) | (ARG_CHAR << 16);
-int short_output = (1 << ARG_OUTPUT) | (ARG_SHORT << 16);
-int short_input = (1 << ARG_INPUT) | (ARG_SHORT << 16);
-int int_output = (1 << ARG_OUTPUT) | (ARG_INT << 16);
-int int_input = (1 << ARG_INPUT) | (ARG_INT << 16);
-int long_output = (1 << ARG_OUTPUT) | (ARG_LONG << 16);
-int long_input = (1 << ARG_INPUT) | (ARG_LONG << 16);
-int double_output = (1 << ARG_OUTPUT) | (ARG_DOUBLE << 16);
-int double_input = (1 << ARG_INPUT) | (ARG_DOUBLE << 16);
-int float_output = (1 << ARG_OUTPUT) | (ARG_FLOAT << 16);
-int float_input = (1 << ARG_INPUT) | (ARG_FLOAT << 16);
-
 struct serverFunction {
 	char* name;
 	int* argTypes;
