@@ -2,7 +2,6 @@
 	this file will have all the binder code
 	add further comments
 */
-
 #include "rpc.h"
 #include "network.h"
 #include <stdio.h>
@@ -15,6 +14,8 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <vector>
+#include <exception>
+
 
 #define PORT "0"   // port we're listening on, to be dynamically decided
 // #define PORT "3600" // for some reason the dynamically allocated port was not accepting connections
@@ -204,12 +205,7 @@ int main(int argc, char* argv[]) {
                             if (strcmp(db.functions[i].name,name) == 0 && len == db.functions[i].numArgs){
                                 bool same = true;
                                 for (int j=0;j<len; j++){
-                                    if (
-                                        get_arg_type(argTypes[j]) != get_arg_type(db.functions[i].argTypes[j]) ||
-                                        is_input(argTypes[j]) != is_input(db.functions[i].argTypes[j]) ||
-                                        is_output(argTypes[j]) != is_output(db.functions[i].argTypes[j]) ||
-                                        (get_arg_length(argTypes[j]) > 0) !=  (get_arg_length(db.functions[i].argTypes[j]) > 0)
-                                    ){
+                                    if (argTypes[j] != db.functions[i].argTypes[j]){
                                         same = false;
                                     }
                                 }
@@ -256,8 +252,12 @@ int main(int argc, char* argv[]) {
                             // Need to free these when server disconnects
                             //free(name);
                             //free(argTypes);
-                        } catch (Exception e) {
+                        } catch (exception& e) {
+                            send_integer(i, REGISTER_FAILURE);
 
+                            // This integer will hold any warnings or errors
+                            int error = -1;
+                            send_integer(i, error);
                         }
                     }
                 } // END handle data from client
@@ -281,7 +281,7 @@ void sendMessage(int s, char* buf, unsigned int len) {
     }
 
     len = total; // return number actually sent here
-    if (n <0)
+    // if (n <0)
         // perror("send");
 }
 
