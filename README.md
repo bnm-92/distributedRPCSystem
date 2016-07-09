@@ -102,3 +102,42 @@ EXECUTE SUCCESS:
 EXECUTE_FAILURE:
 	return -1
 
+Bonus - client caching
+
+We implemented the bonus of caching the server location of functions on the client
+
+Here is the flow of rpcCacheCall
+
+Client checks if there is a matching function signature in its cache
+If so we attempt to send an rpc call to the server
+If it is successful we return 0
+
+Otherwise we continue looping through all matching function signatures and repeating
+
+If we are not successful by the time we reach the end of our cache the client sends the following to the binder after deleting all copies of the requested function signature in the cache
+
+CACHE_REQUEST
+function name
+argTypes
+
+The binder responds with either CACHE_SUCCESS if it finds at least one matching function signature or CACHE_FAILURE if it does not
+
+CACHE_SUCCESS:
+	Client receives the following info:
+		number of matching functions
+		That number of serialized serverFunction structs
+	The client then loads the serverFunction structs into the cache
+
+	Client checks if there is a matching function signature in its cache
+	If so we attempt to send an rpc call to the server
+	If it is successful we return 0
+
+	Otherwise we continue looping through all matching function signatures and repeating
+
+	If we are not successful by the time we reach the end of our cache then we return 0
+
+
+CACHE_FAILURE:
+	return -1
+
+
