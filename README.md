@@ -2,6 +2,17 @@
 group -> Babar Naveed Memon 20648640 bmemon@uwaterloo.ca
 		 Ryan Catoen 20476358 rmcatoen@uwaterloo.ca
 
+TO RUN THE PROJECT:
+	FIRST USE MAKE
+	THEN COMPILE SERVER AND CLIENT
+	example:
+	g++ -L. server_functions.o server_function_skels.o server.c -lrpc -o server -pthread
+	g++ -L. client1.c -lrpc -o client1 -pthread
+
+	the example in the assignment it doesnt include -pthread(please include that) and instead of server.o and client.o you need server.c and client.c because we aren't compiling server/client files in our makefile
+
+
+
 Protocol:
 
 Client/Binder protocol:
