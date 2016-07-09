@@ -15,6 +15,7 @@
 #include <netdb.h>
 #include <vector>
 #include <exception>
+#include <algorithm>
 
 
 #define PORT "0"   // port we're listening on, to be dynamically decided
@@ -22,6 +23,11 @@
 static const size_t max_size= 256;
 
 using namespace std;
+
+int end;
+int sendTermMsg;
+int breakWhile;
+int numConnections;
 
 struct serverFunction {
 	char* name;
@@ -40,7 +46,20 @@ struct database {
 
 void sendMessage(int s, char* buf, unsigned int len);
 
+int findNumber(vector<int>servers, int s) {
+    for (int i=0; i<servers.size(); i++) {
+        if (servers[i] == s) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
 int main(int argc, char* argv[]) {
+    end = 0;
+    sendTermMsg = 0;
+    numConnections = 0;
+    breakWhile = 0;
 	// 1. Binder starts and creates a pool to connect to as many servers and clients it needs to
 
     // Stores info about all of the servers
@@ -130,6 +149,26 @@ int main(int argc, char* argv[]) {
 
     // main loop
     for(;;) {
+        if (1 == sendTermMsg) {
+            sendTermMsg = 0;
+            vector<int> servers;
+            for (int i=0; i<db.functions.size(); i++) {
+                int s = db.functions[i].localfd;
+                if (findNumber(servers, s) == 1) {
+                } else {
+                    servers.push_back(s);
+                }
+            }
+            // now we have a list of servers connected
+            for(int i = 0; i < servers.size(); i++) {
+                send_integer(servers[i], TERMINATE);
+            }
+        }
+        
+        if (breakWhile) {
+            break;
+        }
+
         read_fds = master; // copy it
         if (select(fdmax+1, &read_fds, NULL, NULL, NULL) == -1) {
             // perror("select");
@@ -153,7 +192,7 @@ int main(int argc, char* argv[]) {
                         if (newfd > fdmax) {    // keep track of the max
                             fdmax = newfd;
                         }
-                        
+                        numConnections++;
                         // 2. found a new connection, don't need to do anything here
 
 
@@ -189,6 +228,10 @@ int main(int argc, char* argv[]) {
                         }
                         close(i); // bye!
                         FD_CLR(i, &master); // remove from master set
+                        numConnections--;
+                        if ((end == 1) && (numConnections == 0)) {
+                            breakWhile = 1;
+                        }
                         break;
                     }
                     code = ntohl(code_net);
@@ -241,7 +284,6 @@ int main(int argc, char* argv[]) {
                             // Register server info to database
                             serverFunction server_function = {name, argTypes, server_port, server_identifier, i, len};
                             db.functions.push_back(server_function);
-
                             // Stub code assuming we register successfully
                             send_integer(i, REGISTER_SUCCESS);
 
@@ -259,6 +301,10 @@ int main(int argc, char* argv[]) {
                             int error = -1;
                             send_integer(i, error);
                         }
+                    } else if (code == TERMINATE) {
+                        // loop through all servers and terminate
+                        sendTermMsg = 1;
+                        end = 1;
                     }
                 } // END handle data from client
             } // END got new incoming connection

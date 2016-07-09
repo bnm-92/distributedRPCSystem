@@ -17,6 +17,8 @@
 
 using namespace std;
 
+int numServerCon = 0;
+int end2 = 0;
 int sockfdBinder;
 fd_set master;    // master file descriptor list
 fd_set read_fds;  // temp file descriptor list for select()
@@ -114,6 +116,9 @@ void *listenForClient(void * id) {
 
     // main loop
     for(;;) {
+        if (end2 && (numServerCon == 0)) {
+            break;
+        }
         read_fds = master; // copy it
         if (select(fdmax+1, &read_fds, NULL, NULL, NULL) == -1) {
             // perror("select");
@@ -133,6 +138,7 @@ void *listenForClient(void * id) {
                     if (newfd == -1) {
                         // perror("accept");
                     } else {
+                        numServerCon++;
                         FD_SET(newfd, &master); // add to master set
                         if (newfd > fdmax) {    // keep track of the max
                             fdmax = newfd;
@@ -152,6 +158,7 @@ void *listenForClient(void * id) {
                         } else {
                             // perror("recv");
                         }
+                        numServerCon--;
                         close(i); // bye!
                         FD_CLR(i, &master); // remove from master set
                         break;
@@ -160,7 +167,6 @@ void *listenForClient(void * id) {
                     // printf("code %d\n", code);
 
                     if (code == EXECUTE){
-                        printf("\n RPC EXECUTE\n");
                         char* name =  recv_string(i);
                         int* argTypes = recv_argTypes(i);
 
@@ -174,7 +180,6 @@ void *listenForClient(void * id) {
                         if (skel) {
                         	res = skel(argTypes, args);	
                         }
-                        printf("\n RPC EXECUTE END\n");
 
                         //Success send back to client
                         if (res == 0) {
@@ -199,7 +204,6 @@ void *listenForClient(void * id) {
 
 int rpcInit(){
     // this will create a socket for the client and listen to it on a thread
-    printf("\nRPC INIT\n");
     char* buf;
     int nbytes;
     // char remoteIP[INET6_ADDRSTRLEN];
@@ -328,7 +332,6 @@ int connectToSocket(int port, hostent* server){
 }
 
 int rpcCall(char* name, int* argTypes, void** args){
-    printf("\nRPC CALL\n");
 
     int binder_port = atoi(getenv("BINDER_PORT"));
     struct hostent *binder_address = gethostbyname(getenv("BINDER_ADDRESS"));
@@ -383,7 +386,6 @@ int rpcCall(char* name, int* argTypes, void** args){
     }
 
     free(server_addr);
-    printf("\nRPC CALL END\n");
     return 0;
 }
 
@@ -393,7 +395,6 @@ int rpcCacheCall(char* name, int* argTypes, void** args){
 
 int rpcRegister(char* name, int* argTypes, skeleton f){
     // REGISTER server_identifier_len server_identifier port len_name name len_argTypes argTypes 
-    printf("\nRPC REGISTER\n");
     int len = len_argTypes(argTypes);
 
     send_integer(sockfdBinder, REGISTER);
@@ -421,17 +422,48 @@ int rpcRegister(char* name, int* argTypes, skeleton f){
     	functions.push_back(map);
     	
     }
-    printf("\n RPC REGISTER END\n");
     return 0;
 }
 
 int rpcExecute(){
-    listenForClient((void*)0);
+    // printf("HELLO TEHRE ANOTHER THREAD\n");
+    // listenForClient((void*)0);
+    pthread_create(&clientThread, NULL, listenForClient, (void*)0);
+    while(1) {
+        int code = 0;
+
+        code = recv_integer(sockfdBinder);
+
+        if (code == TERMINATE) {
+
+            end2 = 1;
+            close(sockfdBinder);
+            break;
+        } else if(code < 0) {
+            close(sockfdBinder);
+            break;
+        }
+    }
+
     return 0;
 }
 
 int rpcTerminate(){
+
+    int binder_port = atoi(getenv("BINDER_PORT"));
+    struct hostent *binder_address = gethostbyname(getenv("BINDER_ADDRESS"));
+
+    int sockfd = connectToSocket(binder_port, binder_address); 
+    if (sockfd < 0){
+        return -1;
+    }
+    // send terminate message to binder
+    send_integer(sockfd, TERMINATE);
+
+    close(sockfd);
+
     free(SERVER_ADDRESS);
+
     return 0;
 }
 
