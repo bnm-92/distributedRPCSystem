@@ -1,4 +1,6 @@
 # cs654-3
+group -> Babar Naveed Memon 20648640 bmemon@uwaterloo.ca
+		 Ryan Catoen 20476358 rmcatoen@uwaterloo.ca
 
 Protocol:
 
