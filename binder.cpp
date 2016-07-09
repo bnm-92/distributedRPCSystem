@@ -194,33 +194,7 @@ int main(int argc, char* argv[]) {
                     printf("code %d\n", code);
 
                     if (code == LOC_REQUEST){
-                        // length of name
-                        int len_name_net;
-                        int len_name;
-                        recv(i, &len_name_net, 4, 0);
-                        len_name = ntohl(len_name_net);
-                        printf("len_name %d\n", len_name);
-
-                        // name
-                        char * name = (char*)malloc(sizeof(char)*len_name);
-                        recv(i, name, len_name, 0);
-                        printf("name %s\n", name);
-
-                        // // length of argTypes
-                        // int len_argTypes_net;
-                        // int len;
-                        // recv(i, &len_argTypes_net, 4, 0);
-                        // len = ntohl(len_argTypes_net);
-                        // printf("len_argTypes %d\n", len);
-
-                        // int argTypes[len];
-                        // int j;
-                        // for (j=0; j<len; j++){
-                        //     int argType_net;
-                        //     recv(i, &argType_net, 4, 0);
-                        //     argTypes[i] = ntohl(argType_net);
-                        //     printf("argType %d\n", argTypes[i]);
-                        // }
+                        char* name = recv_string(i);
                         int* argTypes = recv_argTypes(i);
                         int len = len_argTypes(argTypes);
 
