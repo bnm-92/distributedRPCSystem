@@ -35,6 +35,8 @@ struct database {
 	vector<serverFunction> functions;
 };
 
+vector<serverFunction>::size_type db_idx;
+
 //to follow code structure just follow the numbered comments
 
 void sendMessage(int s, char* buf, unsigned int len);
@@ -44,6 +46,7 @@ int main(int argc, char* argv[]) {
 
     // Stores info about all of the servers
     database db;
+    db_idx = 0;
 
 	fd_set master;    // master file descriptor list
     fd_set read_fds;  // temp file descriptor list for select()
@@ -201,24 +204,50 @@ int main(int argc, char* argv[]) {
                         // Determine which server info to return
                         serverFunction s;
                         bool found_server = false;
-                        for(std::vector<serverFunction>::size_type i = 0; i != db.functions.size(); i++) {
-                            if (strcmp(db.functions[i].name,name) == 0 && len == db.functions[i].numArgs){
+                        bool first_check = false;
+                        vector<serverFunction>::size_type copy_idx = db_idx;
+                        vector<serverFunction>::size_type size = db.functions.size();
+                        db_idx++;
+                        for(; db_idx%size != copy_idx && size != 0; db_idx++) {
+                            printf("loop %d\n", db_idx%size);
+                            if (strcmp(db.functions[db_idx%size].name,name) == 0 && len == db.functions[db_idx%size].numArgs){
                                 bool same = true;
                                 for (int j=0;j<len; j++){
                                     if (
-                                        get_arg_type(argTypes[j]) != get_arg_type(db.functions[i].argTypes[j]) ||
-                                        is_input(argTypes[j]) != is_input(db.functions[i].argTypes[j]) ||
-                                        is_output(argTypes[j]) != is_output(db.functions[i].argTypes[j]) ||
-                                        (get_arg_length(argTypes[j]) > 0) !=  (get_arg_length(db.functions[i].argTypes[j]) > 0)
+                                        get_arg_type(argTypes[j]) != get_arg_type(db.functions[db_idx%size].argTypes[j]) ||
+                                        is_input(argTypes[j]) != is_input(db.functions[db_idx%size].argTypes[j]) ||
+                                        is_output(argTypes[j]) != is_output(db.functions[db_idx%size].argTypes[j]) ||
+                                        (get_arg_length(argTypes[j]) > 0) !=  (get_arg_length(db.functions[db_idx%size].argTypes[j]) > 0)
                                     ){
                                         same = false;
                                     }
                                 }
                                 if (same){
-                                    s = db.functions.at(i);
+                                    s = db.functions.at(db_idx%size);
                                     found_server = true;
                                     printf("found a server with a matching function\n");
                                     break;
+                                }
+                            }
+                        }
+                        db_idx = db_idx%size;
+                        if (!found_server){
+                            if (strcmp(db.functions[copy_idx].name,name) == 0 && len == db.functions[copy_idx].numArgs){
+                                bool same = true;
+                                for (int j=0;j<len; j++){
+                                    if (
+                                        get_arg_type(argTypes[j]) != get_arg_type(db.functions[copy_idx].argTypes[j]) ||
+                                        is_input(argTypes[j]) != is_input(db.functions[copy_idx].argTypes[j]) ||
+                                        is_output(argTypes[j]) != is_output(db.functions[copy_idx].argTypes[j]) ||
+                                        (get_arg_length(argTypes[j]) > 0) !=  (get_arg_length(db.functions[copy_idx].argTypes[j]) > 0)
+                                    ){
+                                        same = false;
+                                    }
+                                }
+                                if (same){
+                                    s = db.functions.at(copy_idx);
+                                    found_server = true;
+                                    printf("found a server with a matching function\n");
                                 }
                             }
                         }
@@ -226,33 +255,15 @@ int main(int argc, char* argv[]) {
                             send_integer(i, LOC_FAILURE);
                         } else {
                             send_integer(i, LOC_SUCCESS);
-
-                            printf("TEST\n");
-                            printf("s.sockfd %d\n",s.sockfd);
                             send_integer(i, s.sockfd);
-
-                            printf("s.address %s\n",s.address);
-                            printf("len %d\n", strlen(s.address));
                             send_string(i, s.address);
                         }
-
-
                         free(name);
-
 
                     } else if (code == REGISTER){
                         char* server_identifier = recv_string(i);
                         int server_port = recv_integer(i);
                         char* name = recv_string(i);
-
-                        // int size_argTypes = recv_integer(i);
-                        // int argTypes[size_argTypes/2];
-                        // for (int j=0; j<size_argTypes/2; j++){
-                        //     int argType_net;
-                        //     recv(i, &argType_net, 2, 0);
-                        //     argTypes[j] = ntohl(argType_net);
-                        //     printf("argType %d\n", argTypes[j]);
-                        // }
                         int *argTypes = recv_argTypes(i);
                         int len = len_argTypes(argTypes);
 
