@@ -91,7 +91,7 @@ bool checkFunction2(char* name, int* argTypes, functionPair pair) {
 				if (
 					(get_arg_input_type(argTypes[i]) == get_arg_input_type(pair.argTypes[i])) && 
 					(get_arg_type(argTypes[i]) == get_arg_type(pair.argTypes[i])) && 
-					( (get_arg_length(argTypes[i]) > 0) == (get_arg_length(pair.argTypes[i]) > 0))
+					((get_arg_length(argTypes[i]) > 0) == (get_arg_length(pair.argTypes[i]) > 0))
 					) {
 					return true;
 				}
@@ -183,14 +183,13 @@ void *listenForClient(void * id) {
                         // Now we have all the info we need to run the function
                         // So run it
 
-                        char * functionName = name;
                         skeleton skel = checkFunction(name, argTypes);
-                        int res = 0;
+                        int res = -1;
                         if (skel) {
                         	res = skel(argTypes, args);	
                         }
                         printf("result is: %d\n", res);
-                        printf("%d\n", *((int*)args));
+                        // printf("%d\n", *((int*)args));
                         printf("\n RPC EXECUTE END\n");
                         
                         free(name);

@@ -152,12 +152,13 @@ void** recv_args(int sockid, int* argTypes){
         int type = get_arg_type(argTypes[i]);
         int arg_len = get_arg_length(argTypes[i]);
         int* buf = (int*)malloc(numBytes(type, arg_len));
-        printf("\n buf numBytes are %d\n", numBytes(type, arg_len));
+        printf("\n buf are %d\n", numBytes(type, arg_len));
         recv(sockid, &(*buf), numBytes(type, arg_len), 0);
-        printf("\n buff is %d\n", *buf);
+        // printf("\n buff is %d\n", *buf);
         args[i] = (void*)buf;
-        printf("printing\n");
-        printf("\nreceived: %d\n", *(int*)args[i]);
+        printf("i is: %d \n", i);
+        // printf("\nreceived: %d\n", *(int*)args[i]);
     }
+        printf("\nreceived\n");
     return args;
 }
