@@ -192,8 +192,16 @@ void *listenForClient(void * id) {
                         printf("result is: %d\n", res);
                         // printf("%d\n", *((int*)args));
                         printf("\n RPC EXECUTE END\n");
+
+                        //Success send back to client
+                        send_integer(i, EXECUTE_SUCCESS);
+                        send_string(i, name);
+                        send_argTypes(i, argTypes);
+                        send_args(i, argTypes, args);
                         
                         free(name);
+                        free(argTypes);
+                        free(args);
                     }
                     
                 } // END handle data from client
@@ -384,8 +392,16 @@ int rpcCall(char* name, int* argTypes, void** args){
 
     printf("\ndone sending to server\n");
 
-    // Receive from server
-    printf("done receiving from binder\n");
+    // Receive from server after it executes
+    code = recv_integer(sockfd);
+    if (code == EXECUTE_SUCCESS){
+        name = recv_string(sockfd);
+        argTypes = recv_argTypes(sockfd);
+        args = recv_args(sockfd, argTypes);
+    }
+
+
+    printf("done receiving from server\n");
 
     free(server_addr);
     printf("\nRPC CALL END\n");
